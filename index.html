@@ -33,12 +33,42 @@
             font-size: 1.2rem;
             color: #666;
         }
+        /* Two-column layout */
+        .columns {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            gap: 20px;
+        }
+        .column {
+            flex: 1;
+            background-color: #e0e0e0;
+            padding: 15px;
+            border-radius: 5px;
+            color: #333;
+        }
+        /* Responsive: Stack columns on smaller screens */
+        @media (max-width: 600px) {
+            .columns {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>WIP Software Page</h1>
         <p>This page is under construction. Stay tuned for updates!</p>
+
+        <!-- Two-column section -->
+        <div class="columns">
+            <div class="column">
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum.</p>
+            </div>
+            <div class="column">
+                <p>Curabitur venenatis, nisl in bibendum volutpat, sapien velit pharetra ligula, ac maximus sapien.</p>
+            </div>
+        </div>
     </div>
 </body>
 </html>
