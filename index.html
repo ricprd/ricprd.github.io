@@ -22,7 +22,7 @@
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
+            max-width: 800px;
             width: 100%;
         }
         h1 {
@@ -33,12 +33,13 @@
             font-size: 1.2rem;
             color: #666;
         }
-        /* Two-column layout */
+        /* Four-column layout */
         .columns {
             display: flex;
             justify-content: space-between;
             margin-top: 20px;
-            gap: 20px;
+            gap: 15px;
+            flex-wrap: wrap; /* Allows wrapping on smaller screens */
         }
         .column {
             flex: 1;
@@ -46,11 +47,20 @@
             padding: 15px;
             border-radius: 5px;
             color: #333;
+            min-width: 150px; /* Ensures they don’t shrink too much */
         }
-        /* Responsive: Stack columns on smaller screens */
-        @media (max-width: 600px) {
+        /* Responsive: Stack into two columns on medium screens, one column on small screens */
+        @media (max-width: 700px) {
             .columns {
-                flex-direction: column;
+                flex-wrap: wrap;
+            }
+            .column {
+                flex: 1 1 calc(50% - 15px); /* Two columns per row on medium screens */
+            }
+        }
+        @media (max-width: 400px) {
+            .column {
+                flex: 1 1 100%; /* Stacks into single column on small screens */
             }
         }
     </style>
@@ -60,13 +70,19 @@
         <h1>WIP Software Page</h1>
         <p>This page is under construction. Stay tuned for updates!</p>
 
-        <!-- Two-column section -->
+        <!-- Four-column section -->
         <div class="columns">
             <div class="column">
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum.</p>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
             </div>
             <div class="column">
-                <p>Curabitur venenatis, nisl in bibendum volutpat, sapien velit pharetra ligula, ac maximus sapien.</p>
+                <p>Vivamus lacinia odio vitae vestibulum vestibulum.</p>
+            </div>
+            <div class="column">
+                <p>Curabitur venenatis, nisl in bibendum volutpat.</p>
+            </div>
+            <div class="column">
+                <p>Sapien velit pharetra ligula, ac maximus sapien.</p>
             </div>
         </div>
     </div>
