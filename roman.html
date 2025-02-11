@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roman Numeral Converter</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .converter {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        input, button {
+            padding: 0.5rem;
+            font-size: 1.1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="converter">
+        <input type="text" id="input" placeholder="Enter number or roman numeral" autofocus>
+        <button onclick="convert()">Convert</button>
+        <input type="text" id="output" readonly placeholder="Result will appear here">
+    </div>
+
+    <script>
+        function convert() {
+            const input = document.getElementById('input').value.trim();
+            const output = document.getElementById('output');
+            
+            try {
+                if (/^[IVXLCDM]+$/i.test(input)) {
+                    output.value = romanToNumber(input.toUpperCase());
+                } else if (/^\d+$/.test(input)) {
+                    output.value = numberToRoman(parseInt(input));
+                } else {
+                    throw new Error('Invalid input');
+                }
+            } catch (e) {
+                output.value = 'Invalid input';
+                setTimeout(() => output.value = '', 1500);
+            }
+        }
+
+        function romanToNumber(roman) {
+            const romanMap = { M: 1000, D: 500, C: 100, L: 50, X: 10, V: 5, I: 1 };
+            let total = 0, prevValue = 0;
+            
+            for (const char of roman.split('').reverse()) {
+                const value = romanMap[char];
+                if (!value) throw new Error();
+                total = value < prevValue ? total - value : total + value;
+                prevValue = value;
+            }
+            return total > 3999 ? 'Number too large' : total;
+        }
+
+        function numberToRoman(num) {
+            if (num < 1 || num > 3999) return 'Number must be 1-3999';
+            
+            const values = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+            const symbols = ["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"];
+            
+            return values.reduce((result, value, index) => {
+                while (num >= value) {
+                    result += symbols[index];
+                    num -= value;
+                }
+                return result;
+            }, '');
+        }
+
+        // Allow Enter key to trigger conversion
+        document.getElementById('input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') convert();
+        });
+    </script>
+</body>
+</html>
