@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Repetition Highlighter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 10px;
+            white-space: pre-wrap; /* Preserve line breaks */
+        }
+        #output {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+            white-space: pre-wrap; /* Preserve line breaks and spaces in the output */
+        }
+        .highlight {
+            background-color: yellow;
+        }
+        #tolerance-slider {
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Word Repetition Highlighter</h1>
+    <textarea id="input" placeholder="Paste your text here..."></textarea>
+    <label for="tolerance-slider">Word Distance Tolerance (words): </label>
+    <input type="range" id="tolerance-slider" min="0" max="50" value="10">
+    <span id="tolerance-value">10</span>
+    <div id="output"></div>
+
+    <script>
+        const toleranceSlider = document.getElementById('tolerance-slider');
+        const toleranceValue = document.getElementById('tolerance-value');
+        const inputArea = document.getElementById('input');
+
+        // Array of colors for highlighting
+        const highlightColors = [
+            'yellow', 'lightgreen', 'lightblue', 'darkkhaki', 
+            'lightcoral', 'lightgray', 'aqua', 'darksalmon', 
+            'salmon', 'seagreen', 'lightblue'
+//original:            'yellow', 'lightgreen', 'lightblue', 'lightpink', 
+//original:            'lightcoral', 'lightgoldenrodyellow', 'lightgray', 
+//original:            'lightsalmon', 'lightseagreen', 'lightsteelblue'
+        ];
+
+        // Update the displayed tolerance value when the slider changes
+        toleranceSlider.addEventListener('input', () => {
+            toleranceValue.textContent = toleranceSlider.value;
+            highlightRepeatedWords(); // Re-highlight when slider is adjusted
+        });
+
+        // Listen for input changes in the textarea for real-time highlighting
+        inputArea.addEventListener('input', highlightRepeatedWords);
+
+        function highlightRepeatedWords() {
+            const text = inputArea.value;
+
+            // Modify the regex to handle accented characters by including the Unicode flag 'u'
+            const words = text.toLowerCase().match(/\b[\p{L}]{2,}\b/gu); // Exclude numbers and single-letter words, support accents
+
+            const wordCount = {};
+            const threshold = parseInt(toleranceSlider.value); // Get threshold from slider
+
+            if (!words) {
+                document.getElementById('output').innerHTML = text.replace(/\n/g, "<br>"); // No valid words found, preserve line breaks
+                return;
+            }
+
+            // Count word occurrences and track positions
+            words.forEach(word => {
+                wordCount[word] = (wordCount[word] || 0) + 1;
+            });
+
+            // Highlight repeated words based on distance tolerance
+            let highlightedText = text;
+            const positions = {};
+            words.forEach((word, index) => {
+                if (!positions[word]) positions[word] = [];
+                positions[word].push(index);
+            });
+
+            Object.keys(positions).forEach(word => {
+                if (wordCount[word] > 1) { // Ensure the word is repeated at least once
+                    const indices = positions[word];
+                    let shouldHighlight = false;
+
+                    // If the threshold is 0, highlight all occurrences
+                    if (threshold === 0) {
+                        shouldHighlight = true;
+                    } else {
+                        // Check distance between occurrences
+                        for (let i = 0; i < indices.length; i++) {
+                            for (let j = i + 1; j < indices.length; j++) {
+                                if (indices[j] - indices[i] <= threshold) {
+                                    shouldHighlight = true;
+                                    break;
+                                }
+                            }
+                            if (shouldHighlight) break; // Exit loop early if highlight condition is met
+                        }
+                    }
+
+                    // Highlight if the condition is met
+                    if (shouldHighlight) {
+                        // Get a unique color for this word based on its index
+                        const colorIndex = (wordCount[word] - 1) % highlightColors.length;
+                        const highlightColor = highlightColors[colorIndex];
+                        const regex = new RegExp(`\\b${word}\\b`, 'gi');
+                        highlightedText = highlightedText.replace(regex, match => `<span class="highlight" style="background-color: ${highlightColor};">${match}</span>`);
+                    }
+                }
+            });
+
+            // Preserve line breaks in the final output
+            document.getElementById('output').innerHTML = highlightedText.replace(/\n/g, "<br>");
+        }
+    </script>
+</body>
+</html>
