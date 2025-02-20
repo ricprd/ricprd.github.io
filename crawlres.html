@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Crawl Resource Finder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    h1 {
+      text-align: center;
+    }
+    input[type="text"] {
+      width: 60%;
+      padding: 8px;
+      margin-right: 10px;
+      display: inline-block;
+    }
+    button {
+      padding: 8px 20px;
+      margin-top: 10px;
+      display: inline-block;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+      text-align: center;
+    }
+    #iframeContainer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      gap: 10px;
+    }
+    iframe {
+      width: 48%;
+      height: 500px;
+      border: 1px solid #ccc;
+    }
+    .iframe-link {
+      text-align: center;
+      margin-bottom: 5px;
+    }
+    .iframe-link a {
+      color: #4CAF50;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .iframe-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Crawl Resource Finder</h1>
+  <p>
+    <label for="urlInput">Enter URL:</label><br>
+    <input type="text" id="urlInput" placeholder="https://example.com">
+    <button id="getResources">Get Crawl Resources</button>
+  </p>
+  <p id="error" class="error"></p>
+  <div id="iframeContainer">
+    <div class="iframe-link" id="robotsLink"></div>
+    <div class="iframe-link" id="sitemapLink"></div>
+  </div>
+  <div id="iframeContainer">
+    <iframe id="robotsFrame" title="robots.txt"></iframe>
+    <iframe id="sitemapFrame" title="sitemap.xml"></iframe>
+  </div>
+  
+  <script>
+    document.getElementById('getResources').addEventListener('click', function() {
+      var input = document.getElementById('urlInput').value.trim();
+      var errorElem = document.getElementById('error');
+      var robotsLink = document.getElementById('robotsLink');
+      var sitemapLink = document.getElementById('sitemapLink');
+      var robotsFrame = document.getElementById('robotsFrame');
+      var sitemapFrame = document.getElementById('sitemapFrame');
+
+      // Clear previous messages and results
+      errorElem.textContent = '';
+      robotsLink.innerHTML = '';
+      sitemapLink.innerHTML = '';
+      robotsFrame.src = '';
+      sitemapFrame.src = '';
+
+      if (!input) {
+        errorElem.textContent = 'Please enter a URL.';
+        return;
+      }
+
+      var url;
+      try {
+        url = new URL(input);
+      } catch (e) {
+        errorElem.textContent = 'Invalid URL. Please enter a valid URL.';
+        return;
+      }
+      
+      // Ensure the URL is a root URL (path must be "/" or empty)
+      if (url.pathname !== "/" && url.pathname !== "") {
+        errorElem.textContent = 'Please enter a root URL (e.g., https://example.com).';
+        return;
+      }
+
+      // Construct the base URL
+      var baseUrl = url.protocol + '//' + url.hostname + (url.port ? ':' + url.port : '') + '/';
+
+      // Set iframe sources for robots.txt and sitemap.xml
+      robotsFrame.src = baseUrl + 'robots.txt';
+      sitemapFrame.src = baseUrl + 'sitemap.xml';
+
+      // Create links above the iframes
+      robotsLink.innerHTML = `<a href="${robotsFrame.src}" target="_blank">View robots.txt</a>`;
+      sitemapLink.innerHTML = `<a href="${sitemapFrame.src}" target="_blank">View sitemap.xml</a>`;
+    });
+  </script>
+</body>
+</html>
