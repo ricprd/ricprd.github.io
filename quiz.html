@@ -70,6 +70,11 @@
     button:hover {
       background-color: #7c6a33;
     }
+    button:disabled {
+      background-color: #cccccc;
+      color: #666666;
+      cursor: not-allowed;
+    }
     .result {
       margin-top: 50px;
       text-align: center;
@@ -214,13 +219,29 @@
       quizForm.insertBefore(div, quizForm.lastElementChild);
     });
 
+    // Variável para controlar estado de submissão
+    let isSubmitting = false;
+    let lastSubmissionData = null;
+    
     quizForm.addEventListener("submit", function(event) {
       event.preventDefault();
+      
+      // Evitar submissões múltiplas
+      if (isSubmitting) {
+        return;
+      }
+      
+      // Desabilitar o botão de submissão
+      const submitButton = quizForm.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
       
       // Exibir loading e ocultar mensagens
       loadingElement.style.display = "block";
       errorElement.style.display = "none";
       successElement.style.display = "none";
+      
+      // Definir estado de submissão
+      isSubmitting = true;
       
       const scores = { A: 0, B: 0, C: 0, D: 0, E: 0 };
       const answers = {};
@@ -279,23 +300,70 @@
         formData.append(key, answers[key]);
       }
       
+      // Criar um objeto com os dados relevantes para verificação de duplicação
+      const submissionData = {
+        name: personalInfo.name,
+        email: personalInfo.email,
+        phone: personalInfo.phone,
+        birthdate: personalInfo.birthdate,
+        element: element,
+        answers: Object.values(answers).join('|') // Concatenar todas as respostas para comparação
+      };
+      
+      // Converter para string para comparação
+      const currentSubmissionString = JSON.stringify(submissionData);
+      
+      // Verificar se é uma submissão duplicada imediata
+      if (lastSubmissionData === currentSubmissionString) {
+        // É uma duplicata, apenas mostrar o resultado sem enviar para o servidor
+        loadingElement.style.display = "none";
+        submitButton.disabled = false;
+        isSubmitting = false;
+        
+        // Exibir mensagem de sucesso (mas não foi realmente enviado novamente)
+        successElement.textContent = "Os dados já foram enviados com sucesso!";
+        successElement.style.display = "block";
+        
+        // Rolar para o resultado
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        
+        return;
+      }
+      
+      // Armazenar esta submissão para verificar duplicatas futuras
+      lastSubmissionData = currentSubmissionString;
+      
+      // Adicionar um campo para verificação de duplicatas no servidor
+      formData.append('checksum', currentSubmissionString);
+      
       // Enviar dados para o Google Sheets
       fetch(scriptURL, {
         method: 'POST',
         body: formData
       })
-      .then(response => {
+      .then(response => response.json())
+      .then(data => {
         loadingElement.style.display = "none";
-        if (response.ok) {
+        submitButton.disabled = false;
+        isSubmitting = false;
+        
+        if (data.result === 'success') {
+          successElement.textContent = data.message;
+          successElement.style.display = "block";
+        } else if (data.result === 'duplicate') {
+          // Caso especial para duplicata identificada pelo servidor
+          successElement.textContent = "Seus dados já foram registrados anteriormente!";
           successElement.style.display = "block";
         } else {
-          throw new Error('Erro ao enviar os dados');
+          throw new Error(data.message || 'Erro ao enviar os dados');
         }
       })
       .catch(error => {
         console.error('Error!', error.message);
         loadingElement.style.display = "none";
         errorElement.style.display = "block";
+        submitButton.disabled = false;
+        isSubmitting = false;
       });
 
       // Rolar para o resultado
