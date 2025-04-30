@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -82,6 +82,46 @@
       text-align: left;
       line-height: 1.6;
     }
+    .form-header {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      background-color: #fafafa;
+      text-align: left;
+    }
+    .form-header input, .form-header select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .form-header label {
+      font-weight: 500;
+    }
+    .loading {
+      display: none;
+      margin: 20px auto;
+      text-align: center;
+    }
+    .loading img {
+      width: 50px;
+    }
+    .error-message {
+      color: #d32f2f;
+      margin-top: 20px;
+      display: none;
+      text-align: center;
+    }
+    .success-message {
+      color: #388e3c;
+      margin-top: 20px;
+      display: none;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -89,9 +129,28 @@
     <img src="logo-pfs.png" alt="Logo PFS" class="logo">
     <h1>Descubra seu <span class="dourado">Elemento Dominante</span></h1>
     <form id="quizForm">
+      <div class="form-header">
+        <label for="name">Nome completo:</label>
+        <input type="text" id="name" name="name" required>
+        
+        <label for="email">E-mail:</label>
+        <input type="email" id="email" name="email" required>
+        
+        <label for="phone">Telefone:</label>
+        <input type="tel" id="phone" name="phone" required>
+        
+        <label for="birthdate">Data de nascimento:</label>
+        <input type="date" id="birthdate" name="birthdate" required>
+      </div>
 
       <button type="submit">Ver Resultado</button>
     </form>
+    <div class="loading" id="loading">
+      <p>Processando resultado...</p>
+      <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCAzOCAzOCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHJva2U9IiM4RjNGM0IiPgogICAgPGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxIDEpIiBzdHJva2Utd2lkdGg9IjIiPgogICAgICAgICAgICA8Y2lyY2xlIHN0cm9rZS1vcGFjaXR5PSIuNSIgY3g9IjE4IiBjeT0iMTgiIHI9IjE4Ii8+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik0zNiAxOGMwLTkuOTQtOC4wNi0xOC0xOC0xOCI+CiAgICAgICAgICAgICAgICA8YW5pbWF0ZVRyYW5zZm9ybQogICAgICAgICAgICAgICAgICAgIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIKICAgICAgICAgICAgICAgICAgICB0eXBlPSJyb3RhdGUiCiAgICAgICAgICAgICAgICAgICAgZnJvbT0iMCAxOCAxOCIKICAgICAgICAgICAgICAgICAgICB0bz0iMzYwIDE4IDE4IgogICAgICAgICAgICAgICAgICAgIGR1cj0iMXMiCiAgICAgICAgICAgICAgICAgICAgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICAgICAgICAgICAgPC9wYXRoPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+" alt="Carregando">
+    </div>
+    <div class="error-message" id="errorMessage">Ocorreu um erro ao enviar os dados. Por favor, tente novamente.</div>
+    <div class="success-message" id="successMessage">Respostas enviadas com sucesso!</div>
     <div class="result" id="result"></div>
     <div class="element-description" id="elementDescription"></div>
   </div>
@@ -135,7 +194,13 @@
       Água: "Você traz profundidade, intuição e sabedoria. Quem é regido pelo elemento Água se conecta facilmente às emoções e tem grande capacidade de adaptação e sensibilidade nas relações."
     };
 
+    // URL do Web App implementado no Google Apps Script
+    const scriptURL = 'COLOQUE_SUA_URL_DO_SCRIPT_WEB_APP_AQUI';
+
     const quizForm = document.getElementById("quizForm");
+    const loadingElement = document.getElementById("loading");
+    const errorElement = document.getElementById("errorMessage");
+    const successElement = document.getElementById("successMessage");
 
     questions.forEach((question, index) => {
       const div = document.createElement("div");
@@ -151,12 +216,33 @@
 
     quizForm.addEventListener("submit", function(event) {
       event.preventDefault();
+      
+      // Exibir loading e ocultar mensagens
+      loadingElement.style.display = "block";
+      errorElement.style.display = "none";
+      successElement.style.display = "none";
+      
       const scores = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+      const answers = {};
+      
+      // Coletar informações do cabeçalho
+      const personalInfo = {
+        name: document.getElementById("name").value,
+        email: document.getElementById("email").value,
+        phone: document.getElementById("phone").value,
+        birthdate: document.getElementById("birthdate").value
+      };
+      
+      // Coletar respostas e calcular pontuações
       questions.forEach((question, index) => {
         const answer = quizForm[`q${index}`].value;
+        const selectedText = question.options["ABCDE".indexOf(answer)];
+        
         scores[answer] += question.weight;
+        answers[`q${index}`] = `${answer} - ${selectedText}`;
       });
 
+      // Determinar elemento dominante
       let highest = "A";
       for (const key in scores) {
         if (scores[key] > scores[highest]) {
@@ -171,6 +257,48 @@
       resultDiv.textContent = `Seu elemento dominante é: ${element}!`;
       descriptionDiv.textContent = descriptions[element];
 
+      // Preparar dados para envio
+      const formData = new FormData();
+      
+      // Informações pessoais
+      formData.append('name', personalInfo.name);
+      formData.append('email', personalInfo.email);
+      formData.append('phone', personalInfo.phone);
+      formData.append('birthdate', personalInfo.birthdate);
+      
+      // Resultado do quiz
+      formData.append('element', element);
+      
+      // Pontuações de cada elemento
+      for (const key in scores) {
+        formData.append(`score_${elements[key]}`, scores[key]);
+      }
+      
+      // Respostas individuais
+      for (const key in answers) {
+        formData.append(key, answers[key]);
+      }
+      
+      // Enviar dados para o Google Sheets
+      fetch(scriptURL, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        loadingElement.style.display = "none";
+        if (response.ok) {
+          successElement.style.display = "block";
+        } else {
+          throw new Error('Erro ao enviar os dados');
+        }
+      })
+      .catch(error => {
+        console.error('Error!', error.message);
+        loadingElement.style.display = "none";
+        errorElement.style.display = "block";
+      });
+
+      // Rolar para o resultado
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     });
   </script>
