@@ -3,56 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Formulário de Contato - Projetando com Feng Shui</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <title>Formulário de Contato</title>
   <style>
     body {
-      font-family: 'DM Sans', sans-serif;
+      font-family: Arial, sans-serif;
       background-color: #ffffff;
-      color: #333333;
+      color: #000000;
       margin: 0;
-      padding: 40px 20px;
-      display: flex;
-      justify-content: center;
+      padding: 20px;
     }
     .container {
-      max-width: 800px;
+      max-width: 600px;
       width: 100%;
-      text-align: center;
-    }
-    .logo {
-      margin: 0 auto 30px auto;
+      margin: 0 auto;
     }
     h1 {
       text-align: center;
-      font-size: 36px;
-      margin-bottom: 40px;
-    }
-    h1 .dourado {
-      color: #8F793B;
+      font-size: 24px;
+      margin-bottom: 20px;
     }
     .form-container {
-      margin-bottom: 30px;
-      padding: 30px;
-      border: 1px solid #e0e0e0;
-      border-radius: 10px;
-      background-color: #fafafa;
+      margin-bottom: 20px;
+      padding: 20px;
+      border: 1px solid #cccccc;
       text-align: left;
     }
     label {
       display: block;
-      margin-bottom: 10px;
-      font-size: 18px;
-      font-weight: 500;
+      margin-bottom: 5px;
+      font-size: 16px;
     }
     input[type="text"], textarea {
       width: 100%;
-      padding: 12px;
-      margin-bottom: 20px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 16px;
-      font-family: 'DM Sans', sans-serif;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #cccccc;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+      box-sizing: border-box;
     }
     textarea {
       min-height: 150px;
@@ -60,24 +48,20 @@
     }
     button {
       display: block;
-      margin: 30px auto 0 auto;
-      padding: 15px 30px;
-      font-size: 18px;
-      font-weight: 600;
-      color: #ffffff;
-      background-color: #8F793B;
-      border: none;
-      border-radius: 50px;
+      margin: 20px auto 0 auto;
+      padding: 10px 20px;
+      font-size: 16px;
+      color: #000000;
+      background-color: #e0e0e0;
+      border: 1px solid #cccccc;
       cursor: pointer;
-      transition: background 0.3s;
-      text-transform: uppercase;
     }
     button:hover {
-      background-color: #7c6a33;
+      background-color: #d0d0d0;
     }
     button:disabled {
-      background-color: #cccccc;
-      color: #666666;
+      background-color: #e0e0e0;
+      color: #999999;
       cursor: not-allowed;
     }
     .loading {
@@ -86,29 +70,27 @@
       text-align: center;
     }
     .loading img {
-      width: 50px;
+      width: 40px;
     }
     .error-message {
-      color: #d32f2f;
-      margin-top: 20px;
+      color: #ff0000;
+      margin-top: 15px;
       display: none;
       text-align: center;
     }
     .success-message {
-      color: #388e3c;
-      margin-top: 20px;
+      color: #008000;
+      margin-top: 15px;
       display: none;
       text-align: center;
-      padding: 15px;
-      background-color: #f1f8e9;
-      border-radius: 10px;
+      padding: 10px;
+      border: 1px solid #cccccc;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <img src="logo-pfs.png" alt="Logo PFS" class="logo">
-    <h1>Entre em <span class="dourado">Contato</span></h1>
+    <h1>Formulário de Contato</h1>
     
     <form id="contactForm">
       <div class="form-container">
@@ -124,7 +106,7 @@
     
     <div class="loading" id="loading">
       <p>Enviando mensagem...</p>
-      <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCAzOCAzOCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHJva2U9IiM4RjNGM0IiPgogICAgPGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxIDEpIiBzdHJva2Utd2lkdGg9IjIiPgogICAgICAgICAgICA8Y2lyY2xlIHN0cm9rZS1vcGFjaXR5PSIuNSIgY3g9IjE4IiBjeT0iMTgiIHI9IjE4Ii8+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik0zNiAxOGMwLTkuOTQtOC4wNi0xOC0xOC0xOCI+CiAgICAgICAgICAgICAgICA8YW5pbWF0ZVRyYW5zZm9ybQogICAgICAgICAgICAgICAgICAgIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIKICAgICAgICAgICAgICAgICAgICB0eXBlPSJyb3RhdGUiCiAgICAgICAgICAgICAgICAgICAgZnJvbT0iMCAxOCAxOCIKICAgICAgICAgICAgICAgICAgICB0bz0iMzYwIDE4IDE4IgogICAgICAgICAgICAgICAgICAgIGR1cj0iMXMiCiAgICAgICAgICAgICAgICAgICAgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICAgICAgICAgICAgPC9wYXRoPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+" alt="Carregando">
+      <span>Carregando...</span>
     </div>
     
     <div class="error-message" id="errorMessage">Ocorreu um erro ao enviar a mensagem. Por favor, tente novamente.</div>
@@ -212,7 +194,7 @@
           // Limpar o formulário após envio bem-sucedido
           contactForm.reset();
           
-          successElement.textContent = data.message || "Sua mensagem foi enviada com sucesso! Entraremos em contato em breve.";
+          successElement.textContent = data.message || "Sua mensagem foi enviada com sucesso!";
           successElement.style.display = "block";
         } else if (data.result === 'duplicate') {
           // Caso especial para duplicata identificada pelo servidor
