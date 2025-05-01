@@ -51,26 +51,6 @@
         button:hover {
             background-color: #3367d6;
         }
-        #loader {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-        }
-        .success-message, .error-message {
-            padding: 10px;
-            margin-top: 20px;
-            border-radius: 4px;
-            display: none;
-            text-align: center;
-        }
-        .success-message {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .error-message {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
     </style>
 </head>
 <body>
@@ -90,32 +70,12 @@
         <button type="submit">Enviar</button>
     </form>
     
-    <div id="loader">
-        Enviando mensagem...
-    </div>
-    
-    <div id="successMessage" class="success-message">
-        Sua mensagem foi enviada com sucesso!
-    </div>
-    
-    <div id="errorMessage" class="error-message">
-        Ocorreu um erro ao enviar sua mensagem. Por favor, tente novamente.
-    </div>
-    
     <script>
         // URL do script web do Google Apps Script - SUBSTITUA PELA SUA URL
         const scriptURL = 'https://script.google.com/macros/s/AKfycbxavObq-dR8FhpKK3RpAWlI3Oq-SEethrzxxMuFmF8aDEfpEw057U-FzP6Wa8PwmJIf/exec';
         
         document.getElementById('contactForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            // Mostrar loader
-            document.getElementById('loader').style.display = 'block';
-            document.getElementById('successMessage').style.display = 'none';
-            document.getElementById('errorMessage').style.display = 'none';
-            
-            // Criar formData para envio
-            const formData = new FormData();
             
             // Obter os dados do formulário
             const name = document.getElementById('name').value.trim();
@@ -124,71 +84,48 @@
             // Verificar se os campos estão preenchidos
             if (!name || !message) {
                 alert('Por favor, preencha todos os campos.');
-                document.getElementById('loader').style.display = 'none';
                 return;
             }
             
-            // Adicionar dados ao formData
-            formData.append('name', name);
-            formData.append('message', message);
-            
             // Gerar checksum simples para evitar duplicatas
             const checksum = btoa(name + message + new Date().getTime());
+            
+            // Preparar os dados para envio
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('message', message);
             formData.append('checksum', checksum);
             
-            // Enviar dados via XMLHttpRequest - método compatível com o código original
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', scriptURL, true);
+            // Desativar o botão durante o envio
+            const submitButton = document.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Enviando...';
             
-            xhr.onload = function() {
-                // Esconder loader
-                document.getElementById('loader').style.display = 'none';
-                
-                if (xhr.status === 200) {
-                    try {
-                        const response = JSON.parse(xhr.responseText);
-                        
-                        if (response.result === 'success') {
-                            // Mostrar mensagem de sucesso
-                            document.getElementById('successMessage').style.display = 'block';
-                            
-                            // Limpar o formulário
-                            document.getElementById('contactForm').reset();
-                            
-                            // Esconder a mensagem de sucesso após 5 segundos
-                            setTimeout(function() {
-                                document.getElementById('successMessage').style.display = 'none';
-                            }, 5000);
-                        } else if (response.result === 'duplicate') {
-                            alert('Esta mensagem já foi registrada anteriormente.');
-                        } else {
-                            // Mostrar mensagem de erro
-                            document.getElementById('errorMessage').style.display = 'block';
-                            console.error('Erro:', response.message);
-                        }
-                    } catch (e) {
-                        // Se não conseguir analisar o JSON
-                        document.getElementById('errorMessage').style.display = 'block';
-                        console.error('Erro ao processar resposta:', e);
-                    }
+            // Enviar os dados para o Google Apps Script
+            fetch(scriptURL, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.result === 'success') {
+                    alert('Mensagem enviada com sucesso!');
+                    document.getElementById('contactForm').reset();
+                } else if (data.result === 'duplicate') {
+                    alert('Esta mensagem já foi enviada anteriormente.');
                 } else {
-                    // Se o status não for 200
-                    document.getElementById('errorMessage').style.display = 'block';
-                    console.error('Erro na solicitação:', xhr.status);
+                    alert('Erro: ' + data.message);
                 }
-            };
-            
-            xhr.onerror = function() {
-                // Esconder loader
-                document.getElementById('loader').style.display = 'none';
-                
-                // Mostrar mensagem de erro
-                document.getElementById('errorMessage').style.display = 'block';
-                console.error('Erro na solicitação');
-            };
-            
-            // Enviar a solicitação
-            xhr.send(formData);
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Ocorreu um erro ao enviar sua mensagem.');
+            })
+            .finally(() => {
+                // Reativar o botão após o envio
+                submitButton.disabled = false;
+                submitButton.textContent = 'Enviar';
+            });
         });
     </script>
 </body>
