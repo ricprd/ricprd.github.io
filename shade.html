@@ -107,21 +107,22 @@
       const daysJailed = parseInt(document.getElementById('daysJailed').value, 10);
       const realDay = daysPassed + daysJailed;
 
-      let resultHTML = `<p><strong>Adjusted In-Game Time:</strong> ${realDay} days</p>`;
-
       const lastShadeDay = Math.floor(realDay / 8) * 8;
       const nextShadeDay = lastShadeDay + 8;
+      const nextShadeVisibleInJournal = nextShadeDay - daysJailed;
 
-      resultHTML += `<p><span class="shade-day">Last Shade:</span> Day ${lastShadeDay}  
-                     ${lastShadeDay === realDay ? '(Tonight!)' : ''}</p>`;
-      resultHTML += `<p><span class="shade-day">Next Shade:</span> Day ${nextShadeDay}</p>`;
+      let resultHTML = `<p><strong>Adjusted In-Game Time:</strong> ${realDay} days</p>`;
+
+      resultHTML += `<p><span class="shade-day">Last Shade:</span> Day ${lastShadeDay} ${lastShadeDay === realDay ? '(Tonight!)' : ''}</p>`;
+      resultHTML += `<p><span class="shade-day">Next Shade:</span> Day ${nextShadeVisibleInJournal} <span style="color:#888;">(as seen in your journal)</span></p>`;
 
       resultHTML += `<h3>Shade Days Timeline:</h3><ul>`;
       for (let i = -3; i <= 6; i++) {
         const shadeDay = nextShadeDay + (i * 8);
+        const visibleInJournal = shadeDay - daysJailed;
         if (shadeDay >= 0) {
           const marker = (shadeDay === realDay) ? '🌑 (Today)' : '';
-          resultHTML += `<li class="shade-day">Day ${shadeDay} ${marker}</li>`;
+          resultHTML += `<li class="shade-day">Day ${visibleInJournal} <span style="color:#888;">(real day ${shadeDay})</span> ${marker}</li>`;
         }
       }
       resultHTML += `</ul>`;
