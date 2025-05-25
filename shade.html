@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shade of the Revenant Calculator</title>
+  <style>
+    body {
+      font-family: "Garamond", serif;
+      background-color: #111;
+      color: #eee;
+      padding: 2em;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #9f5;
+    }
+    label {
+      display: block;
+      margin: 1em 0 0.3em;
+    }
+    input {
+      width: 100%;
+      padding: 0.4em;
+      font-size: 1em;
+      margin-bottom: 1em;
+    }
+    button {
+      background-color: #333;
+      color: #9f5;
+      border: 1px solid #9f5;
+      padding: 0.5em 1em;
+      font-size: 1em;
+      cursor: pointer;
+      display: block;
+      margin: auto;
+    }
+    .result {
+      margin-top: 2em;
+      padding: 1em;
+      background-color: #222;
+      border-left: 4px solid #9f5;
+    }
+    .shade-day {
+      color: #9f5;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Shade of the Revenant Calculator</h1>
+
+  <label for="daysPassed">Days Passed:</label>
+  <input type="number" id="daysPassed" min="0" value="220">
+
+  <label for="daysJailed">Days Jailed (actual days lost):</label>
+  <input type="number" id="daysJailed" min="0" value="4">
+
+  <button onclick="calculateShadeDays()">Reveal the Shade</button>
+
+  <div class="result" id="result"></div>
+
+  <script>
+    function calculateShadeDays() {
+      const daysPassed = parseInt(document.getElementById('daysPassed').value, 10);
+      const daysJailed = parseInt(document.getElementById('daysJailed').value, 10);
+      const realDay = daysPassed + daysJailed;
+
+      let resultHTML = `<p><strong>Adjusted In-Game Time:</strong> ${realDay} days</p>`;
+
+      const lastShadeDay = Math.floor(realDay / 8) * 8;
+      const nextShadeDay = lastShadeDay + 8;
+
+      resultHTML += `<p><span class="shade-day">Last Shade:</span> Day ${lastShadeDay}  
+                     ${lastShadeDay === realDay ? '(Tonight!)' : ''}</p>`;
+      resultHTML += `<p><span class="shade-day">Next Shade:</span> Day ${nextShadeDay}</p>`;
+
+      // Build a list of 10 Shade days around the current time
+      resultHTML += `<h3>Shade Days Timeline:</h3><ul>`;
+      for (let i = -3; i <= 6; i++) {
+        const shadeDay = nextShadeDay + (i * 8);
+        if (shadeDay >= 0) {
+          const marker = (shadeDay === realDay) ? '🌑 (Today)' : '';
+          resultHTML += `<li class="shade-day">Day ${shadeDay} ${marker}</li>`;
+        }
+      }
+      resultHTML += `</ul>`;
+
+      document.getElementById('result').innerHTML = resultHTML;
+    }
+  </script>
+</body>
+</html>
