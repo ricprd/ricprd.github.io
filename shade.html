@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shade of the Revenant Calculator</title>
   <style>
     body {
@@ -9,22 +10,30 @@
       background-color: #111;
       color: #eee;
       padding: 2em;
+      max-width: 600px;
       margin: auto;
     }
+
     h1 {
       text-align: center;
       color: #9f5;
     }
+
     label {
       display: block;
       margin: 1em 0 0.3em;
     }
+
     input {
       width: 100%;
       padding: 0.4em;
       font-size: 1em;
       margin-bottom: 1em;
+      background-color: #222;
+      color: #eee;
+      border: 1px solid #666;
     }
+
     button {
       background-color: #333;
       color: #9f5;
@@ -35,15 +44,47 @@
       display: block;
       margin: auto;
     }
+
     .result {
       margin-top: 2em;
       padding: 1em;
       background-color: #222;
       border-left: 4px solid #9f5;
     }
+
     .shade-day {
       color: #9f5;
       font-weight: bold;
+    }
+
+    ul {
+      padding-left: 1.2em;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 1em;
+        margin: 0;
+      }
+
+      input {
+        font-size: 0.9em;
+        padding: 0.3em;
+      }
+
+      button {
+        font-size: 0.9em;
+        padding: 0.4em 0.8em;
+      }
+
+      .result {
+        font-size: 0.9em;
+        padding: 0.8em;
+      }
+
+      h1 {
+        font-size: 1.4em;
+      }
     }
   </style>
 </head>
@@ -51,10 +92,10 @@
   <h1>Shade of the Revenant Calculator</h1>
 
   <label for="daysPassed">Days Passed:</label>
-  <input type="number" id="daysPassed" min="0" value="0">
+  <input type="number" id="daysPassed" min="0" value="220">
 
-  <label for="daysJailed">Days Jailed (actual days lost):</label>
-  <input type="number" id="daysJailed" min="0" value="0">
+  <label for="daysJailed">Days Jailed (actual full days):</label>
+  <input type="number" id="daysJailed" min="0" value="4">
 
   <button onclick="calculateShadeDays()">Reveal the Shade</button>
 
@@ -75,7 +116,6 @@
                      ${lastShadeDay === realDay ? '(Tonight!)' : ''}</p>`;
       resultHTML += `<p><span class="shade-day">Next Shade:</span> Day ${nextShadeDay}</p>`;
 
-      // Build a list of 10 Shade days around the current time
       resultHTML += `<h3>Shade Days Timeline:</h3><ul>`;
       for (let i = -3; i <= 6; i++) {
         const shadeDay = nextShadeDay + (i * 8);
