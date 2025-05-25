@@ -91,10 +91,10 @@
 <body>
   <h1>Shade of the Revenant Calculator</h1>
 
-  <label for="daysPassed">Days Passed:</label>
+  <label for="daysPassed">Days Passed (from game menu):</label>
   <input type="number" id="daysPassed" min="0" value="220">
 
-  <label for="daysJailed">Days Jailed (actual full days):</label>
+  <label for="daysJailed">Full Days Spent in Jail:</label>
   <input type="number" id="daysJailed" min="0" value="4">
 
   <button onclick="calculateShadeDays()">Reveal the Shade</button>
@@ -105,25 +105,25 @@
     function calculateShadeDays() {
       const daysPassed = parseInt(document.getElementById('daysPassed').value, 10);
       const daysJailed = parseInt(document.getElementById('daysJailed').value, 10);
-      const realDay = daysPassed + daysJailed;
 
-      const lastShadeDay = Math.floor(realDay / 8) * 8;
-      const nextShadeDay = lastShadeDay + 8;
-      const nextShadeVisibleInJournal = nextShadeDay - daysJailed;
+      const adjustedMoonDay = daysPassed + daysJailed;
+      const lastShadeMoonDay = Math.floor(adjustedMoonDay / 8) * 8;
+      const nextShadeMoonDay = lastShadeMoonDay + 8;
 
-      let resultHTML = `<p><strong>Adjusted In-Game Time:</strong> ${realDay} days</p>`;
+      const lastShadeJournalDay = lastShadeMoonDay - daysJailed;
+      const nextShadeJournalDay = nextShadeMoonDay - daysJailed;
 
-      resultHTML += `<p><span class="shade-day">Last Shade:</span> Day ${lastShadeDay} ${lastShadeDay === realDay ? '(Tonight!)' : ''}</p>`;
-      resultHTML += `<p><span class="shade-day">Next Shade:</span> Day ${nextShadeVisibleInJournal} <span style="color:#888;">(as seen in your journal)</span></p>`;
+      let resultHTML = '';
 
-      resultHTML += `<h3>Shade Days Timeline:</h3><ul>`;
-      for (let i = -3; i <= 6; i++) {
-        const shadeDay = nextShadeDay + (i * 8);
-        const visibleInJournal = shadeDay - daysJailed;
-        if (shadeDay >= 0) {
-          const marker = (shadeDay === realDay) ? '🌑 (Today)' : '';
-          resultHTML += `<li class="shade-day">Day ${visibleInJournal} <span style="color:#888;">(real day ${shadeDay})</span> ${marker}</li>`;
-        }
+      resultHTML += `<p><span class="shade-day">Last Shade:</span> Day ${lastShadeJournalDay} ${lastShadeJournalDay === daysPassed ? '(Tonight!)' : ''}</p>`;
+      resultHTML += `<p><span class="shade-day">Next Shade:</span> Day ${nextShadeJournalDay}</p>`;
+
+      resultHTML += `<h3>Upcoming Shade Days:</h3><ul>`;
+      for (let i = 0; i <= 6; i++) {
+        const moonDay = nextShadeMoonDay + (i * 8);
+        const journalDay = moonDay - daysJailed;
+        const marker = (journalDay === daysPassed) ? '🌑 (Today)' : '';
+        resultHTML += `<li class="shade-day">Day ${journalDay} ${marker}</li>`;
       }
       resultHTML += `</ul>`;
 
