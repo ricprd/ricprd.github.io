@@ -38,6 +38,10 @@
       border: 1px solid #666;
     }
 
+    input::placeholder {
+      color: #888;
+    }
+
     button {
       background-color: #333;
       color: #9f5;
@@ -108,23 +112,26 @@
   <h1>Shade of the Revenant Calculator</h1>
 
   <label for="daysPassed">Days Passed (from game menu):</label>
-  <input type="number" id="daysPassed" min="0" value="1">
+  <input type="number" id="daysPassed" min="0" placeholder="1">
 
   <label for="daysJailed">Full Days Spent in Jail:</label>
-  <input type="number" id="daysJailed" min="0" value="0">
+  <input type="number" id="daysJailed" min="0" placeholder="0">
 
   <button onclick="calculateShadeDays()">Reveal the Shade</button>
 
   <div class="result" id="result"></div>
 
   <footer>
-    Enchanted with 💀, 🕯️, and Daedric contracts 📜 in Anvil
+    Enchanted with 💀, 🕯️ and Daedric contracts 📜 in Anvil
   </footer>
 
   <script>
     function calculateShadeDays() {
-      const daysPassed = parseInt(document.getElementById('daysPassed').value, 10);
-      const daysJailed = parseInt(document.getElementById('daysJailed').value, 10);
+      const daysPassedInput = document.getElementById('daysPassed').value;
+      const daysJailedInput = document.getElementById('daysJailed').value;
+
+      const daysPassed = parseInt(daysPassedInput || '1', 10);
+      const daysJailed = parseInt(daysJailedInput || '0', 10);
 
       const adjustedMoonDay = daysPassed + daysJailed;
       const lastShadeMoonDay = Math.floor(adjustedMoonDay / 8) * 8;
