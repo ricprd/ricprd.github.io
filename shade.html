@@ -65,6 +65,13 @@
       padding-left: 1.2em;
     }
 
+    footer {
+      margin-top: 3em;
+      text-align: center;
+      font-size: 0.9em;
+      color: #888;
+    }
+
     @media (max-width: 600px) {
       body {
         padding: 1em;
@@ -89,6 +96,11 @@
       h1 {
         font-size: 1.4em;
       }
+
+      footer {
+        font-size: 0.8em;
+        margin-top: 2em;
+      }
     }
   </style>
 </head>
@@ -104,6 +116,10 @@
   <button onclick="calculateShadeDays()">Reveal the Shade</button>
 
   <div class="result" id="result"></div>
+
+  <footer>
+    Enchanted with 💀, 🕯️, and Daedric contracts 📜 in Anvil
+  </footer>
 
   <script>
     function calculateShadeDays() {
