@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Picture Tournament Selector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .mode-selection {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .mode-title {
+            font-size: 2rem;
+            color: #374151;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .mode-options {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mode-option {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            min-width: 250px;
+            border: 3px solid transparent;
+        }
+
+        .mode-option:hover {
+            border-color: #4f46e5;
+        }
+
+        .mode-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .mode-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 10px;
+        }
+
+        .mode-description {
+            color: #6b7280;
+            font-size: 1rem;
+        }
+
+        .text-section {
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #374151;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .text-inputs {
+            margin-bottom: 30px;
+        }
+
+        .text-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .text-input {
+            padding: 15px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            width: 300px;
+            outline: none;
+        }
+
+        .text-input:focus {
+            border-color: #4f46e5;
+        }
+
+        .add-text-btn {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .text-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .text-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            border: 2px solid #e5e7eb;
+        }
+
+        .text-item-content {
+            font-size: 1rem;
+            color: #374151;
+            word-break: break-word;
+        }
+
+        .text-remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+
+        .text-option {
+            font-size: 1.8rem;
+            color: #374151;
+            font-weight: 600;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #f8faff, #e0e7ff);
+            border-radius: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        .winner-text {
+            font-size: 2.5rem;
+            color: #374151;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f8faff, #e0e7ff);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        /* Aqui começa o bloco correto de .upload-area */
+        .upload-area {
+            border: 3px dashed #4f46e5;
+            border-radius: 15px;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, #f8faff, #e0e7ff);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: #7c3aed;
+            background: linear-gradient(135deg, #f0f4ff, #ddd6fe);
+            transform: translateY(-2px);
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(79, 70, 229, 0.05), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+            opacity: 0;
+        }
+
+        .upload-area:hover::before {
+            animation: shimmer 1.5s ease-in-out;
+            opacity: 1;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #4f46e5;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .upload-text {
+            font-size: 1.3rem;
+            color: #374151;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .upload-subtext {
+            color: #6b7280;
+            font-size: 1rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .file-item {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .file-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .file-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .file-name {
+            padding: 10px;
+            font-size: 0.8rem;
+            color: #374151;
+            text-align: center;
+            background: white;
+            word-break: break-word;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .remove-btn:hover {
+            background: rgba(239, 68, 68, 1);
+            transform: scale(1.1);
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+            margin-top: 30px;
+        }
+
+        .start-btn:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(16, 185, 129, 0.4);
+        }
+
+        .start-btn:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .tournament-section {
+            display: none;
+            text-align: center;
+        }
+
+        .round-info {
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 5px solid #4f46e5;
+        }
+
+        .round-title {
+            font-size: 1.5rem;
+            color: #374151;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .round-progress {
+            color: #6b7280;
+            font-size: 1rem;
+        }
+
+        .comparison {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .picture-option {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            max-width: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .picture-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(79, 70, 229, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .picture-option:hover::before {
+            left: 100%;
+        }
+
+        .picture-option img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+
+        .choose-btn {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .choose-btn:hover {
+            background: linear-gradient(135deg, #3730a3, #5b21b6);
+            transform: translateY(-2px);
+        }
+
+        .vs-text {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4f46e5;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .winner-section {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .winner-title {
+            font-size: 3rem;
+            color: #10b981;
+            margin-bottom: 30px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .winner-image {
+			display: block;
+			margin: 0 auto 30px;
+			max-width: 500px;
+			max-height: 400px;
+			object-fit: contain;
+			border-radius: 20px;
+			box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+        }
+
+        .restart-btn:hover {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(99, 102, 241, 0.4);
+        }
+
+        .bye-message {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 5px solid #f59e0b;
+            color: #92400e;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .comparison {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .vs-text {
+                order: 1;
+                margin: 10px 0;
+            }
+            
+            .picture-option {
+                max-width: 100%;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 Picture Tournament</h1>
+            <p>Upload your photos and let the best one win through head-to-head battles!</p>
+        </div>
+        
+        <div class="content">
+            <!-- Mode Selection -->
+            <div class="mode-selection" id="modeSelection">
+                <div class="mode-title">What would you like to compare?</div>
+                <div class="mode-options">
+                    <div class="mode-option" onclick="selectMode('images')">
+                        <div class="mode-icon">🖼️</div>
+                        <div class="mode-name">Images</div>
+                        <div class="mode-description">Upload pictures and find the best one</div>
+                    </div>
+                    <div class="mode-option" onclick="selectMode('text')">
+                        <div class="mode-icon">📝</div>
+                        <div class="mode-name">Text Options</div>
+                        <div class="mode-description">Add text choices and pick the winner</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Section (agora oculta por padrão) -->
+            <div class="upload-section" id="uploadSection" style="display: none;">
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <span class="upload-icon">📁</span>
+                    <div class="upload-text">Choose Your Pictures</div>
+                    <div class="upload-subtext">Click here or drag & drop multiple images (JPG, PNG, GIF)</div>
+                </div>
+                <input type="file" id="fileInput" multiple accept="image/*">
+                
+                <div class="file-list" id="fileList"></div>
+                
+                <button class="start-btn" id="startBtn" onclick="startTournament()" disabled>
+                    Start Tournament
+                </button>
+            </div>
+
+            <!-- Text Section (já estava oculta por padrão) -->
+            <div class="text-section" id="textSection" style="display: none;">
+                <div class="section-title">Add Your Text Options</div>
+                <div class="text-inputs" id="textInputs">
+                    <div class="text-input-group">
+                        <input type="text" class="text-input" placeholder="Enter an option..." maxlength="100">
+                        <button class="add-text-btn" onclick="addTextInput()">+</button>
+                    </div>
+                </div>
+                
+                <div class="text-list" id="textList"></div>
+                
+                <button class="start-btn" id="startTextBtn" onclick="startTextTournament()" disabled>
+                    Start Tournament
+                </button>
+            </div>
+
+            <!-- Tournament Section -->
+            <div class="tournament-section" id="tournamentSection">
+                <div class="round-info">
+                    <div class="round-title" id="roundTitle">Round 1</div>
+                    <div class="round-progress" id="roundProgress">Choose the better picture</div>
+                </div>
+                
+                <div id="byeMessage" class="bye-message" style="display: none;"></div>
+                
+                <div class="comparison" id="comparison">
+                    <div class="picture-option" id="option1">
+                        <img id="img1" src="" alt="Option 1" onclick="choosePicture(0)" style="display: none;">
+                        <div id="text1" class="text-option" onclick="choosePicture(0)" style="display: none;"></div>
+                        <button class="choose-btn" onclick="choosePicture(0)">Choose This One</button>
+                    </div>
+                    
+                    <div class="vs-text">VS</div>
+                    
+                    <div class="picture-option" id="option2">
+                        <img id="img2" src="" alt="Option 2" onclick="choosePicture(1)" style="display: none;">
+                        <div id="text2" class="text-option" onclick="choosePicture(1)" style="display: none;"></div>
+                        <button class="choose-btn" onclick="choosePicture(1)">Choose This One</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Winner Section -->
+            <div class="winner-section" id="winnerSection">
+                <div class="winner-title">🎉 Tournament Champion! 🎉</div>
+                <img class="winner-image" id="winnerImage" src="" alt="Winner" style="display: none;">
+                <div class="winner-text" id="winnerText" style="display: none;"></div>
+                <div style="margin-top: 30px;">
+                    <button class="restart-btn" onclick="restartTournament()">Start New Tournament</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedFiles = [];
+        let textOptions = [];
+        let currentRound = [];
+        let currentPair = 0;
+        let roundNumber = 1;
+        let tournamentBracket = [];
+        let currentMode = '';
+
+        // Mode selection
+        function selectMode(mode) {
+            currentMode = mode;
+            document.getElementById('modeSelection').style.display = 'none';
+            
+            if (mode === 'images') {
+                document.getElementById('uploadSection').style.display = 'block';
+            } else if (mode === 'text') {
+                document.getElementById('textSection').style.display = 'block';
+                setupTextInputs();
+            }
+        }
+
+        // Text mode functions
+        function setupTextInputs() {
+            const inputs = document.querySelectorAll('.text-input');
+            inputs.forEach(input => {
+                input.addEventListener('input', updateTextList);
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        addTextInput();
+                    }
+                });
+            });
+        }
+
+        function addTextInput() {
+            const textInputs = document.getElementById('textInputs');
+            const newGroup = document.createElement('div');
+            newGroup.className = 'text-input-group';
+            newGroup.innerHTML = `
+                <input type="text" class="text-input" placeholder="Enter an option..." maxlength="100">
+                <button class="add-text-btn" onclick="addTextInput()">+</button>
+            `;
+            
+            textInputs.appendChild(newGroup);
+            
+            const newInput = newGroup.querySelector('.text-input');
+            newInput.addEventListener('input', updateTextList);
+            newInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addTextInput();
+                }
+            });
+            newInput.focus();
+        }
+
+        function updateTextList() {
+            const inputs = document.querySelectorAll('.text-input');
+            textOptions = [];
+            
+            inputs.forEach(input => {
+                if (input.value.trim()) {
+                    textOptions.push({
+                        text: input.value.trim(),
+                        id: Date.now() + Math.random()
+                    });
+                }
+            });
+
+            displayTextList();
+            updateTextStartButton();
+        }
+
+        function displayTextList() {
+            const textList = document.getElementById('textList');
+            textList.innerHTML = '';
+            
+            textOptions.forEach((option, index) => {
+                const textItem = document.createElement('div');
+                textItem.className = 'text-item';
+                textItem.innerHTML = `
+                    <div class="text-item-content">${option.text}</div>
+                    <button class="text-remove-btn" onclick="removeTextOption(${index})">×</button>
+                `;
+                textList.appendChild(textItem);
+            });
+        }
+
+        function removeTextOption(index) {
+            textOptions.splice(index, 1);
+            displayTextList();
+            updateTextStartButton();
+        }
+
+        function updateTextStartButton() {
+            const startBtn = document.getElementById('startTextBtn');
+            startBtn.disabled = textOptions.length < 2;
+            
+            if (textOptions.length >= 2) {
+                startBtn.textContent = `Start Tournament (${textOptions.length} options)`;
+            } else {
+                startBtn.textContent = 'Need at least 2 options';
+            }
+        }
+
+        function startTextTournament() {
+            if (textOptions.length < 2) return;
+            
+            // Shuffle the options for randomization
+            currentRound = [...textOptions].sort(() => Math.random() - 0.5);
+            currentPair = 0;
+            roundNumber = 1;
+            
+            // Hide text section, show tournament
+            document.getElementById('textSection').style.display = 'none';
+            document.getElementById('tournamentSection').style.display = 'block';
+            
+            showNextPair();
+        }
+
+        // File input handling
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+
+        // Drag and drop functionality
+        const uploadArea = document.querySelector('.upload-area');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            addFiles(files);
+        });
+
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            addFiles(files);
+        }
+
+        function addFiles(files) {
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        uploadedFiles.push({
+                            name: file.name,
+                            data: e.target.result,
+                            file: file
+                        });
+                        updateFileList();
+                        updateStartButton();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            
+            uploadedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <img src="${file.data}" alt="${file.name}">
+                    <div class="file-name">${file.name}</div>
+                    <button class="remove-btn" onclick="removeFile(${index})">×</button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            updateFileList();
+            updateStartButton();
+        }
+
+        function updateStartButton() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.disabled = uploadedFiles.length < 2;
+            
+            if (uploadedFiles.length >= 2) {
+                startBtn.textContent = `Start Tournament (${uploadedFiles.length} pictures)`;
+            } else {
+                startBtn.textContent = 'Need at least 2 pictures';
+            }
+        }
+
+        function startTournament() {
+            if (uploadedFiles.length < 2) return;
+            
+            // Shuffle the files for randomization
+            currentRound = [...uploadedFiles].sort(() => Math.random() - 0.5);
+            currentPair = 0;
+            roundNumber = 1;
+            
+            // Hide upload section, show tournament
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('tournamentSection').style.display = 'block';
+            
+            showNextPair();
+        }
+
+        function showNextPair() {
+            // Check if temos número ímpar de itens e este é o último emparelhamento
+            if (currentPair * 2 + 1 >= currentRound.length && currentRound.length % 2 === 1) {
+                // Avança com o bye
+                proceedToNextRound();
+                return;
+            }
+            
+            // Se acabaram os pares na rodada
+            if (currentPair * 2 >= currentRound.length) {
+                proceedToNextRound();
+                return;
+            }
+            
+            // Mostrar par atual de acordo com o modo
+            if (currentMode === 'images') {
+                const img1 = document.getElementById('img1');
+                const img2 = document.getElementById('img2');
+                const text1 = document.getElementById('text1');
+                const text2 = document.getElementById('text2');
+                
+                img1.src = currentRound[currentPair * 2].data;
+                img2.src = currentRound[currentPair * 2 + 1].data;
+                img1.style.display = 'block';
+                img2.style.display = 'block';
+                text1.style.display = 'none';
+                text2.style.display = 'none';
+            } else if (currentMode === 'text') {
+                const img1 = document.getElementById('img1');
+                const img2 = document.getElementById('img2');
+                const text1 = document.getElementById('text1');
+                const text2 = document.getElementById('text2');
+                
+                text1.textContent = currentRound[currentPair * 2].text;
+                text2.textContent = currentRound[currentPair * 2 + 1].text;
+                text1.style.display = 'block';
+                text2.style.display = 'block';
+                img1.style.display = 'none';
+                img2.style.display = 'none';
+            }
+            
+            updateRoundInfo();
+        }
+
+        function updateRoundInfo() {
+            const roundTitle = document.getElementById('roundTitle');
+            const roundProgress = document.getElementById('roundProgress');
+            
+            const totalPairs = Math.floor(currentRound.length / 2);
+            const remainingPairs = totalPairs - currentPair;
+            
+            roundTitle.textContent = `Round ${roundNumber}`;
+            roundProgress.textContent = `Battle ${currentPair + 1} of ${totalPairs} - ${remainingPairs} battles remaining`;
+        }
+
+        function choosePicture(choice) {
+            // Adiciona vencedor à próxima rodada
+            const winner = currentRound[currentPair * 2 + choice];
+            
+            // Se ainda não existe array para próxima rodada
+            if (!tournamentBracket[roundNumber]) {
+                tournamentBracket[roundNumber] = [];
+            }
+            
+            tournamentBracket[roundNumber].push(winner);
+            
+            // Próximo par
+            currentPair++;
+            showNextPair();
+        }
+
+        function proceedToNextRound() {
+            // Se há um item “bye”
+            if (currentRound.length % 2 === 1) {
+                if (!tournamentBracket[roundNumber]) {
+                    tournamentBracket[roundNumber] = [];
+                }
+                tournamentBracket[roundNumber].push(currentRound[currentRound.length - 1]);
+            }
+            
+            // Prepara a próxima rodada
+            currentRound = tournamentBracket[roundNumber] || [];
+            
+            // Se só sobrou um vencedor
+            if (currentRound.length === 1) {
+                showWinner(currentRound[0]);
+                return;
+            }
+            
+            // Próxima rodada
+            roundNumber++;
+            currentPair = 0;
+            showNextPair();
+        }
+
+        function showWinner(winner) {
+            document.getElementById('tournamentSection').style.display = 'none';
+            document.getElementById('winnerSection').style.display = 'block';
+            
+            if (currentMode === 'images') {
+                document.getElementById('winnerImage').src = winner.data;
+                document.getElementById('winnerImage').style.display = 'block';
+                document.getElementById('winnerText').style.display = 'none';
+            } else if (currentMode === 'text') {
+                document.getElementById('winnerText').textContent = winner.text;
+                document.getElementById('winnerText').style.display = 'block';
+                document.getElementById('winnerImage').style.display = 'none';
+            }
+        }
+
+        function restartTournament() {
+            // Resetar variáveis
+            uploadedFiles = [];
+            textOptions = [];
+            currentRound = [];
+            currentPair = 0;
+            roundNumber = 1;
+            tournamentBracket = [];
+            currentMode = '';
+            
+            // Resetar UI
+            document.getElementById('winnerSection').style.display = 'none';
+            document.getElementById('tournamentSection').style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('textSection').style.display = 'none';
+            document.getElementById('modeSelection').style.display = 'block';
+            
+            // Resetar upload de imagens
+            document.getElementById('fileList').innerHTML = '';
+            document.getElementById('fileInput').value = '';
+            updateStartButton();
+            
+            // Resetar inputs de texto
+            document.getElementById('textInputs').innerHTML = `
+                <div class="text-input-group">
+                    <input type="text" class="text-input" placeholder="Enter an option..." maxlength="100">
+                    <button class="add-text-btn" onclick="addTextInput()">+</button>
+                </div>
+            `;
+            document.getElementById('textList').innerHTML = '';
+            updateTextStartButton();
+            setupTextInputs();
+        }
+    </script>
+</body>
+</html>
