@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Tileset Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        .upload-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .upload-area {
+            border: 2px dashed #4f46e5;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 4s ease infinite;
+            color: white;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .upload-area:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .upload-area.dragover {
+            border-color: #7c3aed;
+            background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+        }
+
+        .upload-text {
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="range"] {
+            width: 80px;
+            height: 4px;
+            border-radius: 2px;
+            background: #e5e7eb;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+        }
+
+        .scale-value {
+            font-size: 11px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .tileset-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            background-repeat: repeat;
+            background-position: 0 0;
+            transition: all 0.3s ease;
+            background-color: #f9fafb;
+        }
+
+        .info-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-text">
+                <strong>Drop an image here</strong><br>
+                or click to browse
+            </div>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="scaleRange">Scale</label>
+                <input type="range" id="scaleRange" min="0.1" max="3" step="0.1" value="1">
+                <span class="scale-value" id="scaleValue">100%</span>
+            </div>
+            <button class="reset-btn" id="resetBtn">Reset</button>
+        </div>
+    </div>
+
+    <div class="tileset-container" id="tilesetContainer"></div>
+    
+    <div class="info-panel" id="infoPanel">
+        <div id="imageInfo"></div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const tilesetContainer = document.getElementById('tilesetContainer');
+        const scaleRange = document.getElementById('scaleRange');
+        const scaleValue = document.getElementById('scaleValue');
+        const infoPanel = document.getElementById('infoPanel');
+        const imageInfo = document.getElementById('imageInfo');
+        const resetBtn = document.getElementById('resetBtn');
+
+        let currentImageUrl = null;
+        let originalImageSize = { width: 0, height: 0 };
+
+        // Upload area click handler
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File input change handler
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // Scale range handler
+        scaleRange.addEventListener('input', () => {
+            const scale = parseFloat(scaleRange.value);
+            scaleValue.textContent = Math.round(scale * 100) + '%';
+            updateTileset();
+        });
+
+        // Reset button handler
+        resetBtn.addEventListener('click', () => {
+            currentImageUrl = null;
+            tilesetContainer.style.backgroundImage = 'none';
+            tilesetContainer.style.backgroundColor = '#f9fafb';
+            infoPanel.style.display = 'none';
+            fileInput.value = '';
+            scaleRange.value = 1;
+            scaleValue.textContent = '100%';
+        });
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    originalImageSize.width = img.naturalWidth;
+                    originalImageSize.height = img.naturalHeight;
+                    currentImageUrl = e.target.result;
+                    updateTileset();
+                    showImageInfo(file, img);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateTileset() {
+            if (!currentImageUrl) return;
+
+            const scale = parseFloat(scaleRange.value);
+            const scaledWidth = originalImageSize.width * scale;
+            const scaledHeight = originalImageSize.height * scale;
+
+            tilesetContainer.style.backgroundImage = `url(${currentImageUrl})`;
+            tilesetContainer.style.backgroundSize = `${scaledWidth}px ${scaledHeight}px`;
+            tilesetContainer.style.backgroundRepeat = 'repeat';
+            tilesetContainer.style.backgroundPosition = '0 0';
+        }
+
+        function showImageInfo(file, img) {
+            const sizeKB = (file.size / 1024).toFixed(1);
+            imageInfo.innerHTML = `
+                <strong>${file.name}</strong><br>
+                Resolution: ${img.naturalWidth} × ${img.naturalHeight}px<br>
+                Size: ${sizeKB} KB<br>
+                Type: ${file.type}
+            `;
+            infoPanel.style.display = 'block';
+        }
+
+        // Prevent default drag behaviors on the document
+        document.addEventListener('dragover', (e) => e.preventDefault());
+        document.addEventListener('drop', (e) => e.preventDefault());
+    </script>
+</body>
+</html>
