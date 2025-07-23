@@ -71,9 +71,20 @@
 
         .controls {
             margin-top: 15px;
+        }
+
+        .controls-row {
             display: flex;
             gap: 10px;
             align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .capture-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         .control-group {
@@ -152,7 +163,40 @@
             display: none;
         }
 
-        .reset-btn {
+        input[type="number"] {
+            width: 70px;
+            padding: 4px 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .capture-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .capture-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .capture-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: white;
             border: none;
@@ -166,7 +210,7 @@
             letter-spacing: 0.5px;
         }
 
-        .reset-btn:hover {
+        .reset-btn {
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
@@ -183,12 +227,28 @@
         </div>
         
         <div class="controls">
-            <div class="control-group">
-                <label for="scaleRange">Scale</label>
-                <input type="range" id="scaleRange" min="0.1" max="3" step="0.1" value="1">
-                <span class="scale-value" id="scaleValue">100%</span>
+            <div class="controls-row">
+                <div class="control-group">
+                    <label for="scaleRange">Scale</label>
+                    <input type="range" id="scaleRange" min="0.1" max="3" step="0.1" value="1">
+                    <span class="scale-value" id="scaleValue">100%</span>
+                </div>
+                <button class="reset-btn" id="resetBtn">Reset</button>
             </div>
-            <button class="reset-btn" id="resetBtn">Reset</button>
+            
+            <div class="controls-row">
+                <div class="capture-controls">
+                    <div class="control-group">
+                        <label for="captureWidth">Width</label>
+                        <input type="number" id="captureWidth" value="1920" min="100" max="8192">
+                    </div>
+                    <div class="control-group">
+                        <label for="captureHeight">Height</label>
+                        <input type="number" id="captureHeight" value="1080" min="100" max="8192">
+                    </div>
+                    <button class="capture-btn" id="captureBtn" disabled>Capture</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -207,6 +267,9 @@
         const infoPanel = document.getElementById('infoPanel');
         const imageInfo = document.getElementById('imageInfo');
         const resetBtn = document.getElementById('resetBtn');
+        const captureBtn = document.getElementById('captureBtn');
+        const captureWidth = document.getElementById('captureWidth');
+        const captureHeight = document.getElementById('captureHeight');
 
         let currentImageUrl = null;
         let originalImageSize = { width: 0, height: 0 };
@@ -254,7 +317,11 @@
             fileInput.value = '';
             scaleRange.value = 1;
             scaleValue.textContent = '100%';
+            captureBtn.disabled = true;
         });
+
+        // Capture button handler
+        captureBtn.addEventListener('click', capturePattern);
 
         function handleFileSelect(e) {
             const file = e.target.files[0];
@@ -278,6 +345,7 @@
                     currentImageUrl = e.target.result;
                     updateTileset();
                     showImageInfo(file, img);
+                    captureBtn.disabled = false;
                 };
                 img.src = e.target.result;
             };
@@ -306,6 +374,60 @@
                 Type: ${file.type}
             `;
             infoPanel.style.display = 'block';
+        }
+
+        function capturePattern() {
+            if (!currentImageUrl) return;
+
+            const width = parseInt(captureWidth.value);
+            const height = parseInt(captureHeight.value);
+            
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+
+            // Create image object
+            const img = new Image();
+            img.onload = () => {
+                const scale = parseFloat(scaleRange.value);
+                const tileWidth = originalImageSize.width * scale;
+                const tileHeight = originalImageSize.height * scale;
+
+                // Calculate how many tiles we need
+                const tilesX = Math.ceil(width / tileWidth) + 1;
+                const tilesY = Math.ceil(height / tileHeight) + 1;
+
+                // Draw tiled pattern
+                for (let x = 0; x < tilesX; x++) {
+                    for (let y = 0; y < tilesY; y++) {
+                        const drawX = x * tileWidth;
+                        const drawY = y * tileHeight;
+                        ctx.drawImage(img, drawX, drawY, tileWidth, tileHeight);
+                    }
+                }
+
+                // Crop to exact dimensions
+                const finalCanvas = document.createElement('canvas');
+                finalCanvas.width = width;
+                finalCanvas.height = height;
+                const finalCtx = finalCanvas.getContext('2d');
+                finalCtx.drawImage(canvas, 0, 0, width, height, 0, 0, width, height);
+
+                // Download the image
+                finalCanvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `tileset_${width}x${height}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+            };
+            img.src = currentImageUrl;
         }
 
         // Prevent default drag behaviors on the document
