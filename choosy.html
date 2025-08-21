@@ -640,6 +640,13 @@
         let tournamentBracket = [];
         let currentMode = '';
 
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
         // Mode selection
         function selectMode(mode) {
             currentMode = mode;
@@ -739,8 +746,8 @@
         function startTextTournament() {
             if (textOptions.length < 2) return;
             
-            // Shuffle the options for randomization
-            currentRound = [...textOptions].sort(() => Math.random() - 0.5);
+            currentRound = [...textOptions];
+            shuffleArray(currentRound);
             currentPair = 0;
             roundNumber = 1;
             
@@ -831,8 +838,8 @@
         function startTournament() {
             if (uploadedFiles.length < 2) return;
             
-            // Shuffle the files for randomization
-            currentRound = [...uploadedFiles].sort(() => Math.random() - 0.5);
+            currentRound = [...uploadedFiles];
+            shuffleArray(currentRound);
             currentPair = 0;
             roundNumber = 1;
             
