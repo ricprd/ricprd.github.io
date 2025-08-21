@@ -128,7 +128,7 @@
     <td align="center">
       <font size="3" color="#8B4513"><b>Visitor Counter</b></font><br>
       <font size="2">You are visitor number:</font><br>
-      <font size="4" color="#FF0000"><b>001337</b></font>
+      <font size="4" color="#FF0000"><b id="visitor-counter">001337</b></font>
     </td>
   </tr>
 </table>
@@ -166,6 +166,24 @@
 </table>
 
 </center>
+
+<script>
+  function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function pad(num, size) {
+    let s = num + "";
+    while (s.length < size) s = "0" + s;
+    return s;
+  }
+
+  const randomNumber = getRandomInt(1404, 1718);
+  const paddedNumber = pad(randomNumber, 6);
+  document.getElementById('visitor-counter').textContent = paddedNumber;
+</script>
 
 </body>
 </html>
