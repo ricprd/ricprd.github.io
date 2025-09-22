@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Latest movies</title>
+<style>
+body{font-family:sans-serif;margin:20px;line-height:1.4;background-color:#14181c;color:#99aabb}
+#content{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px;justify-items:center}
+.item{text-align:center}
+.item img{max-width:100%;height:auto;border-radius:4px;display:block;margin:0 auto}
+.date{font-size:12px;color:#99aabb;margin:8px 0;opacity:0.7}
+h1{font-size:14px;margin:8px 0}
+a{color:#99aabb;text-decoration:none}
+a:hover{text-decoration:underline;color:#ffffff}
+#loading{text-align:center;padding:20px}
+.spinner{width:40px;height:40px;border:4px solid #99aabb;border-top:4px solid #ffffff;border-radius:50%;animation:spin 1s linear infinite;margin:20px auto;opacity:0.3}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<h1 style="text-align:center;margin-bottom:30px;font-size:24px;font-weight:normal">Latest movies at SceneSource</h1>
+<div id="loading"><div class="spinner"></div></div>
+<div id="content"></div>
+<footer style="text-align:center;margin-top:40px;padding:20px;border-top:1px solid #99aabb;opacity:0.7">
+  <a href="https://www.scnsrc.me/category/films/hd/" style="color:#99aabb;text-decoration:none">See more at SceneSource</a>
+</footer>
+<script>
+const content = document.getElementById('content');
+const loading = document.getElementById('loading');
+
+// Try multiple CORS proxy services as fallbacks
+const corsProxies = [
+  'https://api.allorigins.win/raw?url=',
+  'https://cors-anywhere.herokuapp.com/',
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://thingproxy.freeboard.io/fetch/'
+];
+
+const targetUrl = 'https://www.scnsrc.me/category/films/hd/feed/';
+
+async function tryLoadFeed(proxyIndex = 0) {
+  if (proxyIndex >= corsProxies.length) {
+    loading.innerHTML = 'Error: All CORS proxy services are unavailable. Please try again later or use a different network.';
+    return;
+  }
+
+  const proxyUrl = corsProxies[proxyIndex];
+  const fullUrl = proxyUrl + encodeURIComponent(targetUrl);
+  
+  try {
+    loading.innerHTML = '<div class="spinner"></div>';
+    
+    const response = await fetch(fullUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.text();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(data, 'text/xml');
+    const items = xml.querySelectorAll('item');
+    
+    loading.style.display = 'none';
+    
+    if (items.length === 0) {
+      content.innerHTML = '<p>No items found in feed.</p>';
+      return;
+    }
+    
+    let html = '';
+    items.forEach(item => {
+      const title = item.querySelector('title')?.textContent || 'No title';
+      const link = item.querySelector('link')?.textContent || '#';
+      const desc = item.querySelector('description')?.textContent || '';
+      const date = item.querySelector('pubDate')?.textContent || '';
+      
+      // Filter out entries with "720p" in the title
+      if (title.toLowerCase().includes('720p')) {
+        return; // Skip this item
+      }
+      
+      // Extract image from enclosure or description
+      let imageUrl = '';
+      const enclosure = item.querySelector('enclosure[type^="image"]');
+      if (enclosure) {
+        imageUrl = enclosure.getAttribute('url');
+      } else {
+        // Try to find image in description
+        const imgMatch = desc.match(/<img[^>]+src="([^"]+)"/i);
+        if (imgMatch) imageUrl = imgMatch[1];
+      }
+      
+      const cleanDesc = desc.replace(/<[^>]*>/g, '').substring(0, 200);
+      const formatDate = date ? new Date(date).toLocaleDateString() : '';
+      
+      html += `<div class="item">
+        ${imageUrl ? `<a href="${link}" target="_blank"><img src="${imageUrl}" alt="${title}"></a>` : ''}
+        ${imageUrl ? `<h1><a href="${link}" target="_blank">${title}</a></h1>` : `<h1><a href="${link}" target="_blank">${title}</a></h1>`}
+        ${formatDate ? `<div class="date">${formatDate}</div>` : ''}
+      </div>`;
+    });
+    
+    content.innerHTML = html;
+    
+  } catch (error) {
+    console.log(`Proxy ${proxyIndex + 1} failed:`, error);
+    // Try next proxy
+    setTimeout(() => tryLoadFeed(proxyIndex + 1), 1000);
+  }
+}
+
+// Start trying to load the feed
+tryLoadFeed();
+</script>
+</body>
+</html>
