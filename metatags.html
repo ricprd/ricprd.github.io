@@ -3,213 +3,366 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta Tag Analyzer</title>
+    <title>View Meta Tags</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 20px auto;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
             padding: 20px;
         }
-        .input-section {
-            margin-bottom: 20px;
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
             text-align: center;
         }
-        input[type="text"] {
-            width: 60%;
-            padding: 8px;
-            margin-right: 10px;
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
         }
-        button {
-            padding: 8px 20px;
-            background-color: #4CAF50;
+
+        .input-section {
+            padding: 20px;
+            background: #ecf0f1;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        #urlInput {
+            flex: 1;
+            padding: 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        #urlInput:focus {
+            border-color: #3498db;
+        }
+
+        #analyzeBtn {
+            padding: 12px 24px;
+            background: #3498db;
             color: white;
             border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
+            transition: background 0.3s;
         }
-        button:hover {
-            background-color: #45a049;
+
+        #analyzeBtn:hover {
+            background: #2980b9;
         }
-        button:disabled {
-            background-color: #cccccc;
+
+        #analyzeBtn:disabled {
+            background: #95a5a6;
             cursor: not-allowed;
         }
-        .result-section {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-        }
-        .error {
-            color: red;
-            margin-top: 10px;
-        }
-        .meta-item {
-            margin-bottom: 15px;
-        }
-        .meta-item h3 {
-            margin-bottom: 5px;
-            color: #333;
-        }
-        .heading-list {
-            list-style-type: none;
-            padding-left: 0;
-            margin: 10px 0;
-        }
-        .heading-item {
-            margin: 5px 0;
-            padding-left: calc((var(--level) - 1) * 20px);
-            transition: padding 0.2s ease;
-        }
-        .heading-tag {
-            display: inline-block;
-            min-width: 40px;
-            font-weight: bold;
-            color: #4CAF50;
-            margin-right: 10px;
-        }
-        .loader {
+
+        .results {
+            padding: 20px;
             display: none;
-            border: 4px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 4px solid #4CAF50;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 10px auto;
         }
+
+        .results.show {
+            display: block;
+        }
+
+        .result-item {
+            margin-bottom: 25px;
+        }
+
+        .result-label {
+            font-weight: 700;
+            font-size: 14px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 14px;
+            color: #34495e;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #3498db;
+        }
+
+        .char-count {
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .headings-list {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .error {
+            color: #e74c3c;
+            background: #fadbd8;
+            border-left-color: #e74c3c;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .note {
+            background: #d1ecf1;
+            border-left: 3px solid #17a2b8;
+            padding: 15px;
+            margin: 20px;
+            font-size: 13px;
+            color: #0c5460;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
-    <div class="input-section">
-        <h1>Meta Tag Analyzer</h1>
-        <input type="text" id="urlInput" placeholder="Enter URL (e.g., https://example.com)">
-        <button onclick="analyzeUrl()" id="analyzeBtn">Get Meta Tags</button>
-        <div class="loader" id="loader"></div>
-        <div id="errorMessage" class="error"></div>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 View Meta Tags</h1>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="urlInput" 
+                    placeholder="Enter URL (e.g., https://example.com)"
+                    value=""
+                >
+                <button id="analyzeBtn">Analyze</button>
+            </div>
+        </div>
+
+        <div class="note">
+            <strong>Info:</strong> This tool uses a CORS proxy to fetch web pages, allowing you to analyze any publicly accessible website.
+            Analysis may take a few seconds depending on the page size.
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Fetching page data...</p>
+        </div>
+
+        <div id="results" class="results">
+            <div class="result-item">
+                <div class="result-label">Page URL:</div>
+                <div class="result-value" id="pageUrl"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Meta Title:<span class="char-count" id="titleCount"></span></div>
+                <div class="result-value" id="metaTitle"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Meta Description:<span class="char-count" id="descCount"></span></div>
+                <div class="result-value" id="metaDescription"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Meta Keywords:</div>
+                <div class="result-value" id="metaKeywords"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Meta Robots:</div>
+                <div class="result-value" id="metaRobots"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Heading Tags:</div>
+                <div class="result-value headings-list" id="headingTags"></div>
+            </div>
+        </div>
     </div>
-    <div id="results" class="result-section"></div>
 
     <script>
+        const urlInput = document.getElementById('urlInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const resultsDiv = document.getElementById('results');
+        const loadingDiv = document.getElementById('loading');
+
+        // Add enter key support
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                analyzeUrl();
+            }
+        });
+
+        analyzeBtn.addEventListener('click', analyzeUrl);
+
         async function analyzeUrl() {
-            const urlInput = document.getElementById('urlInput').value.trim();
-            const resultsDiv = document.getElementById('results');
-            const errorDiv = document.getElementById('errorMessage');
-            const loader = document.getElementById('loader');
-            const analyzeBtn = document.getElementById('analyzeBtn');
-
-            // Show loading state
-            loader.style.display = 'block';
-            analyzeBtn.disabled = true;
-            resultsDiv.innerHTML = '';
-            errorDiv.textContent = '';
-
-            if (!urlInput) {
-                errorDiv.textContent = 'Please enter a URL';
-                loader.style.display = 'none';
-                analyzeBtn.disabled = false;
+            let url = urlInput.value.trim();
+            
+            if (!url) {
+                alert('Please enter a URL');
                 return;
             }
 
+            // Add https:// if no protocol specified
+            if (!url.match(/^https?:\/\//i)) {
+                url = 'https://' + url;
+            }
+
+            // Validate URL
             try {
-                const proxyUrl = 'https://api.allorigins.win/get?url=';
-                const response = await fetch(proxyUrl + encodeURIComponent(urlInput));
+                new URL(url);
+            } catch (e) {
+                alert('Please enter a valid URL');
+                return;
+            }
+
+            // Show loading, hide results
+            loadingDiv.style.display = 'block';
+            resultsDiv.classList.remove('show');
+            analyzeBtn.disabled = true;
+
+            try {
+                // Use CORS proxy to fetch the page
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
                 
-                if (!response.ok) throw new Error('Network response was not ok');
+                const response = await fetch(proxyUrl, {
+                    method: 'GET',
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const html = await response.text();
                 
-                const data = await response.json();
+                // Parse the HTML
                 const parser = new DOMParser();
-                const htmlDoc = parser.parseFromString(data.contents, 'text/html');
+                const doc = parser.parseFromString(html, 'text/html');
 
-                // Extract meta data
-                const metaData = {
-                    url: urlInput,
-                    title: getTagContent(htmlDoc, 'title'),
-                    description: getMetaContent(htmlDoc, 'description'),
-                    keywords: getMetaContent(htmlDoc, 'keywords'),
-                    robots: getMetaContent(htmlDoc, 'robots'),
-                    headings: getHeadings(htmlDoc)
-                };
-
-                // Small delay to ensure loading feedback is visible
-                setTimeout(() => {
-                    loader.style.display = 'none';
-                    analyzeBtn.disabled = false;
-                    displayResults(metaData);
-                }, 500);
+                // Extract information
+                extractAndDisplay(url, doc);
 
             } catch (error) {
-                loader.style.display = 'none';
+                showError(`Error fetching URL: ${error.message}\n\nPlease check that the URL is correct and the website is accessible.`);
+            } finally {
+                loadingDiv.style.display = 'none';
                 analyzeBtn.disabled = false;
-                errorDiv.textContent = `Error fetching URL: ${error.message}`;
             }
         }
 
-        function getMetaContent(doc, name) {
-            const meta = doc.querySelector(`meta[name="${name}"]`) || doc.querySelector(`meta[property="${name}"]`);
-            return meta ? meta.content : 'Not found';
-        }
+        function extractAndDisplay(url, doc) {
+            // Page URL
+            document.getElementById('pageUrl').textContent = url;
 
-        function getTagContent(doc, tag) {
-            const element = doc.querySelector(tag);
-            return element ? element.textContent : 'Not found';
-        }
+            // Meta Title
+            const titleElement = doc.querySelector('title');
+            const metaTitle = titleElement ? titleElement.textContent.trim() : 'N/A';
+            document.getElementById('metaTitle').textContent = metaTitle;
+            document.getElementById('titleCount').textContent = 
+                metaTitle !== 'N/A' ? `(${metaTitle.length} characters)` : '';
 
-        function getHeadings(doc) {
-            return Array.from(doc.querySelectorAll('h1, h2, h3, h4')).map(heading => ({
-                tag: heading.tagName.toLowerCase(),
-                text: heading.textContent.trim()
-            }));
-        }
+            // Meta Description
+            const descMeta = doc.querySelector('meta[name="description" i]');
+            const metaDescription = descMeta ? descMeta.getAttribute('content').trim() : 'N/A';
+            document.getElementById('metaDescription').textContent = metaDescription;
+            document.getElementById('descCount').textContent = 
+                metaDescription !== 'N/A' ? `(${metaDescription.length} characters)` : '';
 
-        function displayResults(data) {
-            const resultsDiv = document.getElementById('results');
-            let html = '';
+            // Meta Keywords
+            const keywordsMeta = doc.querySelector('meta[name="keywords" i]');
+            const metaKeywords = keywordsMeta ? keywordsMeta.getAttribute('content').trim() : 'N/A';
+            document.getElementById('metaKeywords').textContent = metaKeywords;
 
-            html += `<div class="meta-item">
-                <h3>Page URL:</h3>
-                <p>${data.url}</p>
-            </div>`;
+            // Meta Robots
+            const robotsMeta = doc.querySelector('meta[name="robots" i]');
+            const metaRobots = robotsMeta ? robotsMeta.getAttribute('content').trim() : 'N/A';
+            document.getElementById('metaRobots').textContent = metaRobots;
 
-            html += `<div class="meta-item">
-                <h3>Meta Title:</h3>
-                <p>${data.title} (${data.title.length} characters)</p>
-            </div>`;
-
-            html += `<div class="meta-item">
-                <h3>Meta Description:</h3>
-                <p>${data.description} (${data.description.length} characters)</p>
-            </div>`;
-
-            html += `<div class="meta-item">
-                <h3>Meta Keywords:</h3>
-                <p>${data.keywords || 'Not specified'}</p>
-            </div>`;
-
-            html += `<div class="meta-item">
-                <h3>Meta Robots:</h3>
-                <p>${data.robots || 'Not specified'}</p>
-            </div>`;
-
-            html += `<div class="meta-item">
-                <h3>Heading Tags:</h3>
-                <ul class="heading-list">`;
+            // Heading Tags
+            const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            const headingsList = document.getElementById('headingTags');
             
-            data.headings.forEach(heading => {
-                const level = parseInt(heading.tag[1]);
-                html += `
-                    <li class="heading-item" style="--level: ${level}">
-                        <span class="heading-tag">${heading.tag.toUpperCase()}</span>
-                        ${heading.text}
-                    </li>`;
-            });
-            
-            html += `</ul></div>`;
+            if (headings.length > 0) {
+                let headingsText = '';
+                headings.forEach(heading => {
+                    const level = parseInt(heading.tagName[1]);
+                    const indent = '\t'.repeat(level - 1);
+                    const text = heading.textContent.trim();
+                    headingsText += `${indent}<${heading.tagName}>: ${text}\n`;
+                });
+                headingsList.textContent = headingsText;
+            } else {
+                headingsList.textContent = 'No headings found.';
+            }
 
-            resultsDiv.innerHTML = html;
+            // Show results
+            resultsDiv.classList.add('show');
+        }
+
+        function showError(message) {
+            document.getElementById('pageUrl').textContent = message;
+            document.getElementById('pageUrl').classList.add('error');
+            
+            // Clear other fields
+            document.getElementById('metaTitle').textContent = '';
+            document.getElementById('titleCount').textContent = '';
+            document.getElementById('metaDescription').textContent = '';
+            document.getElementById('descCount').textContent = '';
+            document.getElementById('metaKeywords').textContent = '';
+            document.getElementById('metaRobots').textContent = '';
+            document.getElementById('headingTags').textContent = '';
+
+            resultsDiv.classList.add('show');
+
+            // Remove error class after displaying
+            setTimeout(() => {
+                document.getElementById('pageUrl').classList.remove('error');
+            }, 100);
         }
     </script>
 </body>
