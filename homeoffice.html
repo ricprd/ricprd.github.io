@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora Ergonômica — Home Office</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --win-bg: #c0c0c0;
+    --win-light: #ffffff;
+    --win-dark: #808080;
+    --win-darker: #404040;
+    --win-darkest: #000000;
+    --title-bar: #000080;
+    --title-text: #ffffff;
+    --field-bg: #ffffff;
+    --btn-face: #c0c0c0;
+    --desktop-bg: #008080;
+    --accent: #000080;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    color: #000;
+    background: var(--desktop-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    image-rendering: pixelated;
+    -webkit-font-smoothing: none;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
+    background-size: 4px 4px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Taskbar ── */
+  .taskbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+    background: var(--win-bg);
+    border-top: 2px solid var(--win-light);
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    gap: 4px;
+    z-index: 1000;
+  }
+  .start-btn {
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    padding: 2px 10px;
+    background: var(--btn-face);
+    border: 2px outset var(--win-bg);
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .start-btn:active { border-style: inset; }
+  .taskbar-window {
+    font-family: 'VT323', monospace;
+    font-size: 15px;
+    padding: 2px 12px;
+    background: var(--win-bg);
+    border: 2px inset var(--win-bg);
+    min-width: 160px;
+    cursor: default;
+  }
+  .taskbar-clock {
+    margin-left: auto;
+    font-size: 15px;
+    padding: 0 8px;
+    border: 1px inset var(--win-bg);
+    background: var(--btn-face);
+  }
+
+  /* ── Window ── */
+  .window {
+    position: relative;
+    z-index: 10;
+    background: var(--win-bg);
+    border: 2px solid;
+    border-color: var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+    box-shadow: 1px 1px 0 var(--win-darkest), inset 1px 1px 0 var(--win-light);
+    width: 480px;
+    max-width: 96vw;
+    animation: windowOpen 0.15s ease-out;
+  }
+  @keyframes windowOpen {
+    0% { transform: scale(0.92); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .title-bar {
+    background: var(--title-bar);
+    color: var(--title-text);
+    padding: 3px 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: default;
+    user-select: none;
+  }
+  .title-bar-text {
+    flex: 1;
+    text-align: center;
+    font-size: 17px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .title-btn {
+    width: 20px;
+    height: 20px;
+    background: var(--btn-face);
+    border: 2px outset var(--win-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    font-family: 'VT323', monospace;
+    color: #000;
+    padding: 0;
+  }
+  .title-btn:active { border-style: inset; }
+
+  .window-body { padding: 12px; }
+
+  /* ── Group box ── */
+  .group-box {
+    border: 2px solid;
+    border-color: var(--win-dark) var(--win-light) var(--win-light) var(--win-dark);
+    padding: 12px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .group-box legend {
+    font-size: 17px;
+    color: #000;
+    padding: 0 4px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Field rows ── */
+  .field-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 8px;
+  }
+  .field-row:last-child { margin-bottom: 0; }
+  .field-row label {
+    min-width: 155px;
+    font-size: 18px;
+    cursor: default;
+  }
+
+  .input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+  }
+
+  /* ── Stepper group ── */
+  .stepper-group {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  input[type="number"] {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    padding: 3px 6px;
+    width: 90px;
+    background: var(--field-bg);
+    border: 2px solid;
+    border-color: var(--win-dark) var(--win-light) var(--win-light) var(--win-dark);
+    outline: none;
+    color: #000;
+    text-align: right;
+  }
+  input[type="number"]:focus {
+    outline: 1px dotted var(--accent);
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] { -moz-appearance: textfield; }
+
+  .stepper-btn {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    width: 28px;
+    height: 30px;
+    background: var(--btn-face);
+    border: 2px outset var(--win-bg);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    padding: 0;
+    user-select: none;
+    line-height: 1;
+  }
+  .stepper-btn:active { border-style: inset; }
+
+  .unit {
+    font-size: 17px;
+    min-width: 26px;
+  }
+
+  /* ── Output fields ── */
+  .output-field {
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    padding: 3px 6px;
+    width: 90px;
+    background: #ffffcc;
+    border: 2px solid;
+    border-color: var(--win-dark) var(--win-light) var(--win-light) var(--win-dark);
+    text-align: right;
+    color: var(--accent);
+    font-weight: bold;
+    user-select: all;
+    cursor: default;
+  }
+
+  .separator {
+    height: 2px;
+    background: var(--win-dark);
+    border-bottom: 1px solid var(--win-light);
+    margin: 10px 0;
+  }
+
+  /* ── Buttons ── */
+  .btn-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 2px;
+  }
+  .win-btn {
+    font-family: 'VT323', monospace;
+    font-size: 17px;
+    padding: 4px 16px;
+    min-width: 100px;
+    background: var(--btn-face);
+    border: 2px outset var(--win-bg);
+    cursor: pointer;
+    color: #000;
+    letter-spacing: 0.5px;
+  }
+  .win-btn:active {
+    border-style: inset;
+    padding: 5px 15px 3px 17px;
+  }
+  .win-btn:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -4px;
+  }
+  .win-btn.primary {
+    border: 3px outset var(--win-bg);
+    outline: 1px solid #000;
+    outline-offset: 0;
+  }
+  .win-btn.primary:active { border: 3px inset var(--win-bg); }
+
+  /* ── Illustration ── */
+  .illustration {
+    display: flex;
+    justify-content: center;
+    margin: 6px 0 2px;
+  }
+  .illustration svg { width: 120px; height: auto; }
+
+  /* ── Toast ── */
+  .toast-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .toast-overlay.show { opacity: 1; pointer-events: auto; }
+  .toast-box {
+    background: var(--win-bg);
+    border: 2px solid;
+    border-color: var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+    box-shadow: 2px 2px 0 var(--win-darkest);
+    min-width: 260px;
+    animation: windowOpen 0.12s ease-out;
+  }
+  .toast-title {
+    background: var(--title-bar);
+    color: var(--title-text);
+    padding: 3px 6px;
+    font-size: 16px;
+    text-align: center;
+  }
+  .toast-content {
+    padding: 16px 20px;
+    text-align: center;
+    font-size: 18px;
+    white-space: pre-line;
+  }
+  .toast-btn-row {
+    display: flex;
+    justify-content: center;
+    padding: 0 20px 14px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 500px) {
+    .window { width: 98vw; }
+    .field-row label { min-width: 120px; font-size: 16px; }
+    .field-row { gap: 4px; }
+    input[type="number"] { width: 74px; }
+    .output-field { width: 74px; }
+    .win-btn { min-width: 80px; padding: 4px 10px; font-size: 15px; }
+    .title-bar-text { font-size: 14px; }
+    .stepper-btn { width: 24px; height: 26px; font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Main Window -->
+<div class="window">
+  <div class="title-bar">
+    <div class="title-btn">&#9644;</div>
+    <div class="title-bar-text">Calculadora Ergonômica — Home Office</div>
+    <div class="title-btn">&#9650;</div>
+    <div class="title-btn">&#9660;</div>
+  </div>
+  <div class="window-body">
+
+    <!-- Illustration -->
+    <div class="illustration">
+      <svg viewBox="0 0 120 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="60" y="18" width="56" height="4" fill="#808080" stroke="#000" stroke-width="1"/>
+        <rect x="84" y="22" width="4" height="50" fill="#808080" stroke="#000" stroke-width="0.5"/>
+        <rect x="8" y="12" width="32" height="50" rx="2" fill="#000080" stroke="#000" stroke-width="1.5"/>
+        <rect x="12" y="16" width="24" height="42" rx="1" fill="#4040a0"/>
+        <rect x="4" y="62" width="48" height="8" rx="2" fill="#000080" stroke="#000" stroke-width="1.5"/>
+        <rect x="46" y="42" width="12" height="4" rx="1" fill="#404040" stroke="#000" stroke-width="1"/>
+        <rect x="46" y="46" width="4" height="18" fill="#404040" stroke="#000" stroke-width="0.5"/>
+        <rect x="2" y="42" width="12" height="4" rx="1" fill="#404040" stroke="#000" stroke-width="1"/>
+        <rect x="8" y="46" width="4" height="18" fill="#404040" stroke="#000" stroke-width="0.5"/>
+        <rect x="24" y="70" width="8" height="26" fill="#404040" stroke="#000" stroke-width="1"/>
+        <line x1="28" y1="96" x2="4" y2="116" stroke="#404040" stroke-width="3"/>
+        <line x1="28" y1="96" x2="52" y2="116" stroke="#404040" stroke-width="3"/>
+        <line x1="28" y1="96" x2="28" y2="118" stroke="#404040" stroke-width="3"/>
+        <circle cx="4" cy="118" r="4" fill="#404040" stroke="#000" stroke-width="1"/>
+        <circle cx="52" cy="118" r="4" fill="#404040" stroke="#000" stroke-width="1"/>
+        <circle cx="28" cy="120" r="4" fill="#404040" stroke="#000" stroke-width="1"/>
+        <line x1="60" y1="70" x2="60" y2="116" stroke="#c00" stroke-width="1" stroke-dasharray="2,2"/>
+        <text x="64" y="96" fill="#c00" font-size="9" font-family="VT323, monospace" id="svgSeat">48cm</text>
+        <line x1="62" y1="44" x2="62" y2="70" stroke="#008000" stroke-width="1" stroke-dasharray="2,2"/>
+        <text x="66" y="60" fill="#008000" font-size="9" font-family="VT323, monospace" id="svgArm">27cm</text>
+      </svg>
+    </div>
+
+    <!-- Inputs -->
+    <fieldset class="group-box">
+      <legend>📐 Suas Medidas</legend>
+      <div class="field-row">
+        <label for="altura">Sua altura:</label>
+        <div class="input-wrap">
+          <div class="stepper-group">
+            <button class="stepper-btn minus" data-target="altura" data-step="-0.01" aria-label="Diminuir altura">−</button>
+            <input type="number" id="altura" step="0.01" min="1.00" max="2.50" value="1.79">
+            <button class="stepper-btn plus" data-target="altura" data-step="0.01" aria-label="Aumentar altura">+</button>
+          </div>
+          <span class="unit">m</span>
+        </div>
+      </div>
+      <div class="field-row">
+        <label for="mesa">Altura da mesa:</label>
+        <div class="input-wrap">
+          <div class="stepper-group">
+            <button class="stepper-btn minus" data-target="mesa" data-step="-1" aria-label="Diminuir mesa">−</button>
+            <input type="number" id="mesa" step="1" min="40" max="120" value="73">
+            <button class="stepper-btn plus" data-target="mesa" data-step="1" aria-label="Aumentar mesa">+</button>
+          </div>
+          <span class="unit">cm</span>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Outputs -->
+    <fieldset class="group-box">
+      <legend>🪑 Ajustes Recomendados</legend>
+      <div class="field-row">
+        <label>Assento da cadeira:</label>
+        <div class="input-wrap">
+          <div class="output-field" id="outAssento">48</div>
+          <span class="unit">cm</span>
+        </div>
+      </div>
+      <div class="field-row">
+        <label>Braço da cadeira:</label>
+        <div class="input-wrap">
+          <div class="output-field" id="outBraco">27</div>
+          <span class="unit">cm</span>
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="separator"></div>
+
+    <div class="btn-row">
+      <button class="win-btn primary" id="btnCopiar" title="Copiar todas as medidas">📋 Copiar Tudo</button>
+      <button class="win-btn" id="btnReset" title="Restaurar valores padrão">🔄 Resetar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Taskbar -->
+<div class="taskbar">
+  <div class="start-btn">▶ Iniciar</div>
+  <div class="taskbar-window">📐 Calculadora Ergonômica</div>
+  <div class="taskbar-clock" id="clock">00:00</div>
+</div>
+
+<!-- Toast -->
+<div class="toast-overlay" id="toast">
+  <div class="toast-box">
+    <div class="toast-title" id="toastTitle">Aviso</div>
+    <div class="toast-content" id="toastContent"></div>
+    <div class="toast-btn-row">
+      <button class="win-btn" onclick="hideToast()">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  /*
+   * ── Lógica de cálculo ──
+   *
+   * Valores de referência (calibração):
+   *   Altura 1,79 m (179 cm) + Mesa 72 cm → Assento 48 cm, Braço 27 cm
+   *   Altura 1,79 m (179 cm) + Mesa 73 cm → Assento 49 cm, Braço 28 cm
+   *
+   * Modelo:
+   *   baseSeat = round(alturaCm × 48 / 179)   — escala proporcional à altura
+   *   baseArm  = round(alturaCm × 27 / 179)   — escala proporcional à altura
+   *   seat = baseSeat + (mesa − 72)            — acompanha variação da mesa 1:1
+   *   arm  = baseArm  + (mesa − 72)            — acompanha variação da mesa 1:1
+   */
+
+  const REF_HEIGHT = 179;
+  const REF_DESK   = 72;
+  const REF_SEAT   = 48;
+  const REF_ARM    = 27;
+
+  const elAltura  = document.getElementById('altura');
+  const elMesa    = document.getElementById('mesa');
+  const elAssento = document.getElementById('outAssento');
+  const elBraco   = document.getElementById('outBraco');
+  const elSvgSeat = document.getElementById('svgSeat');
+  const elSvgArm  = document.getElementById('svgArm');
+  const elClock   = document.getElementById('clock');
+
+  function calculate() {
+    const heightCm = parseFloat(elAltura.value) * 100;
+    const deskCm   = parseFloat(elMesa.value);
+
+    if (isNaN(heightCm) || isNaN(deskCm) || heightCm <= 0 || deskCm <= 0) {
+      elAssento.textContent = '—';
+      elBraco.textContent   = '—';
+      elSvgSeat.textContent = '—';
+      elSvgArm.textContent  = '—';
+      return;
+    }
+
+    const baseSeat = Math.round(heightCm * REF_SEAT / REF_HEIGHT);
+    const baseArm  = Math.round(heightCm * REF_ARM / REF_HEIGHT);
+    const deskDelta = deskCm - REF_DESK;
+
+    const seat = Math.round(baseSeat + deskDelta);
+    const arm  = Math.round(baseArm + deskDelta);
+
+    elAssento.textContent = seat;
+    elBraco.textContent   = arm > 0 ? arm : '—';
+    elSvgSeat.textContent = seat + 'cm';
+    elSvgArm.textContent  = arm > 0 ? arm + 'cm' : '—';
+
+    saveState();
+  }
+
+  // ── LocalStorage ──
+  const STORAGE_KEY = 'ergo_calc_state';
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        altura: elAltura.value,
+        mesa: elMesa.value
+      }));
+    } catch(e) {}
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (s.altura) elAltura.value = s.altura;
+        if (s.mesa)   elMesa.value   = s.mesa;
+      }
+    } catch(e) {}
+  }
+
+  // ── Copy ──
+  function copyAll() {
+    const text = [
+      '📐 Medidas Ergonômicas — Home Office',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'Altura: ' + elAltura.value + ' m',
+      'Mesa: ' + elMesa.value + ' cm',
+      '',
+      '🪑 Ajustes recomendados:',
+      'Assento da cadeira: ' + elAssento.textContent + ' cm',
+      'Braço da cadeira: ' + elBraco.textContent + ' cm'
+    ].join('\n');
+
+    navigator.clipboard.writeText(text).then(function() {
+      showToast('Copiado!', '✅ Medidas copiadas\npara a área de transferência.');
+    }).catch(function() {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('Copiado!', '✅ Medidas copiadas\npara a área de transferência.');
+    });
+  }
+
+  // ── Reset ──
+  function resetAll() {
+    elAltura.value = '1.79';
+    elMesa.value   = '73';
+    calculate();
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+    showToast('Resetado', '🔄 Valores restaurados\npara o padrão.');
+  }
+
+  // ── Toast ──
+  window.hideToast = function() {
+    document.getElementById('toast').classList.remove('show');
+  };
+
+  function showToast(title, msg) {
+    document.getElementById('toastTitle').textContent = title;
+    document.getElementById('toastContent').textContent = msg;
+    document.getElementById('toast').classList.add('show');
+    setTimeout(hideToast, 1800);
+  }
+
+  // ── Stepper buttons (with hold-to-repeat) ──
+  document.querySelectorAll('.stepper-btn').forEach(function(btn) {
+    let intervalId = null;
+
+    function step() {
+      const target = document.getElementById(btn.dataset.target);
+      const stepVal = parseFloat(btn.dataset.step);
+      let val = parseFloat(target.value);
+      if (isNaN(val)) return;
+      val += stepVal;
+      const min = parseFloat(target.min);
+      const max = parseFloat(target.max);
+      if (!isNaN(min) && val < min) val = min;
+      if (!isNaN(max) && val > max) val = max;
+      const decimals = (target.step && target.step.includes('.')) ? target.step.split('.')[1].length : 0;
+      target.value = val.toFixed(decimals);
+      calculate();
+    }
+
+    function startRepeat(e) {
+      e.preventDefault();
+      step();
+      intervalId = setInterval(step, 120);
+    }
+    function stopRepeat() { clearInterval(intervalId); intervalId = null; }
+
+    btn.addEventListener('mousedown', startRepeat);
+    btn.addEventListener('mouseup', stopRepeat);
+    btn.addEventListener('mouseleave', stopRepeat);
+    btn.addEventListener('touchstart', startRepeat);
+    btn.addEventListener('touchend', stopRepeat);
+    btn.addEventListener('touchcancel', stopRepeat);
+  });
+
+  // ── Clock ──
+  function updateClock() {
+    const now = new Date();
+    elClock.textContent =
+      String(now.getHours()).padStart(2, '0') + ':' +
+      String(now.getMinutes()).padStart(2, '0');
+  }
+
+  // ── Init ──
+  loadState();
+  calculate();
+  updateClock();
+  setInterval(updateClock, 30000);
+
+  elAltura.addEventListener('input', calculate);
+  elMesa.addEventListener('input', calculate);
+  document.getElementById('btnCopiar').addEventListener('click', copyAll);
+  document.getElementById('btnReset').addEventListener('click', resetAll);
+})();
+</script>
+</body>
+</html>
