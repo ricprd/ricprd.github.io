@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resize images in bulk</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inconsolata:wght@400;500;700&display=swap');
+
+:root {
+  --bg: #f5f2ed;
+  --bg2: #ede9e2;
+  --bg3: #e4dfd7;
+  --ink: #1a1714;
+  --ink2: #4a453f;
+  --ink3: #8a837a;
+  --rule: #d4cec5;
+  --accent: #c84b2f;
+  --accent2: #e8693a;
+  --accent-bg: rgba(200,75,47,0.08);
+  --green: #2a7a4f;
+  --green-bg: rgba(42,122,79,0.08);
+  --sans: 'Syne', sans-serif;
+  --mono: 'Inconsolata', monospace;
+  --radius: 3px;
+  --shadow: 0 1px 3px rgba(26,23,20,0.08), 0 4px 16px rgba(26,23,20,0.04);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
+
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 28px 100px;
+}
+
+header {
+  padding: 36px 0 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 40px;
+}
+.brand-name {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.brand-name span { color: var(--accent); }
+.brand-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink3);
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+.offline-pill {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  border: 1.5px solid var(--rule);
+  padding: 4px 10px;
+  border-radius: 20px;
+  color: var(--ink3);
+  background: var(--bg2);
+}
+
+#dropzone {
+  position: relative;
+  border: 2px dashed var(--rule);
+  border-radius: 6px;
+  padding: 44px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 36px;
+  background: var(--bg2);
+}
+#dropzone:hover, #dropzone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+#dropzone input {
+  position: absolute; inset: 0;
+  opacity: 0; cursor: pointer;
+  width: 100%; height: 100%;
+}
+.dz-glyph { font-size: 38px; opacity: 0.25; margin-bottom: 12px; font-family: var(--mono); }
+.dz-label { font-size: 15px; font-weight: 700; color: var(--ink2); margin-bottom: 5px; }
+.dz-hint  { font-family: var(--mono); font-size: 11px; color: var(--ink3); letter-spacing: 0.04em; }
+
+.pick-btn {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 9px 22px;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  transition: background 0.15s;
+}
+.pick-btn:hover { background: var(--accent); }
+
+.fsapi-note {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink3);
+  margin-top: 10px;
+  opacity: 0.7;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.settings-card {
+  background: var(--bg);
+  border: 1.5px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 20px;
+}
+.card-title {
+  padding: 12px 16px;
+  background: var(--ink);
+  color: #f5f2ed;
+  font-size: 10px;
+  font-family: var(--mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.settings-body { padding: 20px 16px; }
+.s-group { margin-bottom: 22px; }
+.s-group:last-child { margin-bottom: 0; }
+.s-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--ink3);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: block;
+}
+.s-hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink3);
+  margin-top: 5px;
+}
+.s-divider { height: 1px; background: var(--rule); margin: 18px 0; }
+
+.dim-row { display: grid; grid-template-columns: 1fr 14px 1fr; align-items: center; gap: 6px; }
+.dim-x { text-align: center; font-family: var(--mono); font-size: 13px; color: var(--ink3); }
+.px-wrap { position: relative; }
+.px-wrap input { padding-right: 28px; }
+.px-wrap::after {
+  content: 'px';
+  position: absolute; right: 9px; top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--mono); font-size: 10px; color: var(--ink3);
+  pointer-events: none;
+}
+
+input[type=number], input[type=text] {
+  width: 100%;
+  background: var(--bg2);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 14px;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+  -moz-appearance: textfield;
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+input:focus { border-color: var(--accent); background: #fff; }
+
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.toggle-text { font-size: 13px; color: var(--ink2); font-weight: 600; }
+.switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.sw-track {
+  position: absolute; inset: 0;
+  background: var(--bg3);
+  border: 1.5px solid var(--rule);
+  border-radius: 22px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.sw-track::before {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px; left: 3px; top: 2px;
+  background: var(--ink3); border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+.switch input:checked + .sw-track { background: var(--accent); border-color: var(--accent); }
+.switch input:checked + .sw-track::before { transform: translateX(18px); background: #fff; }
+
+.quality-wrap { margin-top: 14px; display: none; }
+.quality-wrap.on { display: block; }
+.q-row { display: flex; align-items: center; gap: 10px; }
+input[type=range] {
+  flex: 1; -webkit-appearance: none;
+  background: var(--rule); height: 3px; border-radius: 2px;
+  outline: none; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  background: var(--accent); border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(200,75,47,0.3);
+  cursor: pointer; transition: transform 0.1s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+.q-val { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--accent); width: 30px; text-align: right; flex-shrink: 0; }
+
+.rename-wrap { margin-top: 10px; display: none; }
+.rename-wrap.on { display: block; }
+.rename-preview {
+  font-family: var(--mono); font-size: 10px; color: var(--ink3);
+  margin-top: 6px; padding: 5px 8px;
+  background: var(--bg3); border-radius: var(--radius);
+}
+.rename-preview strong { color: var(--accent); }
+
+#btn-process {
+  width: 100%; margin-top: 20px; padding: 13px;
+  background: var(--ink); color: var(--bg);
+  border: none; border-radius: var(--radius);
+  font-family: var(--sans); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.06em; cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: background 0.2s, transform 0.1s;
+}
+#btn-process:hover:not(:disabled) { background: var(--accent); }
+#btn-process:active:not(:disabled) { transform: scale(0.98); }
+#btn-process:disabled { opacity: 0.35; cursor: not-allowed; }
+#btn-process .prog {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: rgba(255,255,255,0.1); width: 0%;
+  transition: width 0.25s; pointer-events: none;
+}
+
+.list-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.list-title {
+  font-size: 10px; font-family: var(--mono); letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink3);
+  display: flex; align-items: center; gap: 8px;
+}
+.n-badge {
+  background: var(--ink); color: var(--bg);
+  font-size: 9px; font-family: var(--mono);
+  padding: 2px 6px; border-radius: 10px;
+}
+.n-badge.has { background: var(--accent); }
+.clear-btn {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+  background: none; border: none; color: var(--ink3); cursor: pointer;
+  transition: color 0.15s; padding: 2px;
+}
+.clear-btn:hover { color: var(--accent); }
+
+.empty-state {
+  border: 1.5px dashed var(--rule); border-radius: 6px;
+  padding: 60px 20px; text-align: center; background: var(--bg2);
+}
+.empty-glyph { font-family: var(--mono); font-size: 28px; opacity: 0.2; margin-bottom: 10px; }
+.empty-text  { font-family: var(--mono); font-size: 11px; color: var(--ink3); letter-spacing: 0.08em; }
+
+.img-list { display: flex; flex-direction: column; gap: 6px; }
+
+.img-row {
+  background: #fff; border: 1.5px solid var(--rule); border-radius: 5px;
+  display: grid; grid-template-columns: 58px 1fr auto;
+  align-items: center; gap: 12px; padding: 10px 12px;
+  box-shadow: var(--shadow);
+  animation: fadeUp 0.18s ease;
+  transition: border-color 0.2s;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.img-row.done    { border-left: 3px solid var(--green); }
+.img-row.errored { border-left: 3px solid var(--accent); }
+
+.thumb { width: 58px; height: 44px; object-fit: cover; border-radius: 3px; background: var(--bg3); display: block; flex-shrink: 0; }
+.img-info { min-width: 0; }
+.img-name { font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+.img-meta { font-family: var(--mono); font-size: 10px; color: var(--ink3); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tag { padding: 1px 5px; border-radius: 2px; border: 1px solid var(--rule); font-size: 9px; letter-spacing: 0.05em; color: var(--ink3); }
+.tag.done { border-color: var(--green); color: var(--green); background: var(--green-bg); }
+
+.row-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rule); transition: background 0.3s; }
+.status-dot.processing { background: #f5c518; animation: blink 0.7s ease infinite; }
+.status-dot.done  { background: var(--green); }
+.status-dot.error { background: var(--accent); }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+.act-btn {
+  background: none; border: 1.5px solid var(--rule); border-radius: var(--radius);
+  color: var(--ink3); font-family: var(--mono); font-size: 10px;
+  padding: 3px 8px; cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap; letter-spacing: 0.04em;
+}
+.act-btn:hover     { border-color: var(--ink2); color: var(--ink2); }
+.act-btn.dl:hover  { border-color: var(--green); color: var(--green); }
+.act-btn.rm:hover  { border-color: var(--accent); color: var(--accent); }
+
+#bottom-bar {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--ink); padding: 14px 28px;
+  align-items: center; justify-content: space-between; gap: 16px;
+  z-index: 200; animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+#bottom-bar.on { display: flex; }
+.bar-info { font-family: var(--mono); font-size: 11px; color: rgba(245,242,237,0.5); }
+.bar-info strong { color: #f5f2ed; }
+.bar-btns { display: flex; gap: 10px; }
+.bar-btn {
+  padding: 9px 18px; border-radius: var(--radius);
+  font-family: var(--sans); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.04em; cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.bar-btn:hover { opacity: 0.85; }
+.bar-btn:active { transform: scale(0.97); }
+.bar-btn.zip { background: var(--accent); color: #fff; border: none; }
+.bar-btn.ind { background: none; border: 1.5px solid rgba(245,242,237,0.25); color: #f5f2ed; }
+
+@media (max-width: 680px) {
+  .workspace { grid-template-columns: 1fr; }
+  .settings-card { position: static; }
+  header { flex-wrap: wrap; gap: 12px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div>
+      <div class="brand-name">batch<span>//</span>resize</div>
+      <div class="brand-sub">client-side · no upload · offline ready</div>
+    </div>
+    <div class="offline-pill">⬤ works offline</div>
+  </header>
+
+  <div id="dropzone">
+    <input type="file" id="file-input" accept="image/*" multiple>
+    <div class="dz-glyph">[ + ]</div>
+    <div class="dz-label">Select images to resize in place</div>
+    <div class="dz-hint">PNG &middot; JPG &middot; WEBP &middot; GIF &middot; BMP &middot; files are overwritten directly on disk</div>
+    <button class="pick-btn" id="pick-btn" type="button">Choose files&hellip;</button>
+    <div class="fsapi-note" id="fsapi-note">Browser will ask permission to read &amp; write each file</div>
+  </div>
+
+  <div class="workspace">
+
+    <div class="settings-card">
+      <div class="card-title">Settings</div>
+      <div class="settings-body">
+
+        <div class="s-group">
+          <span class="s-label">Dimensions</span>
+          <div class="dim-row">
+            <div class="px-wrap"><input type="number" id="g-w" placeholder="width"  min="1" max="99999"></div>
+            <span class="dim-x">×</span>
+            <div class="px-wrap"><input type="number" id="g-h" placeholder="height" min="1" max="99999"></div>
+          </div>
+          <div class="s-hint">One blank → exact on set axis, other scales proportionally</div>
+        </div>
+
+        <div class="s-divider"></div>
+
+        <div class="s-group">
+          <div class="toggle-row">
+            <span class="toggle-text">Convert to JPG</span>
+            <label class="switch"><input type="checkbox" id="to-jpg"><span class="sw-track"></span></label>
+          </div>
+          <div class="quality-wrap" id="q-wrap">
+            <span class="s-label" style="margin-top:12px;display:block">JPG quality</span>
+            <div class="q-row">
+              <input type="range" id="q-slider" min="1" max="100" value="80">
+              <span class="q-val" id="q-val">80</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="s-divider"></div>
+
+        <div class="s-group">
+          <div class="toggle-row">
+            <span class="toggle-text">Batch rename</span>
+            <label class="switch"><input type="checkbox" id="do-rename"><span class="sw-track"></span></label>
+          </div>
+          <div class="rename-wrap" id="rename-wrap">
+            <span class="s-label" style="margin-top:12px;display:block">Base name</span>
+            <input type="text" id="rename-base" placeholder="e.g. photo" value="image">
+            <div class="rename-preview" id="rename-preview">→ <strong>image-1</strong>.png, <strong>image-2</strong>.png …</div>
+          </div>
+        </div>
+
+        <button id="btn-process" disabled>
+          <span class="prog" id="prog"></span>
+          <span id="btn-lbl">Process all</span>
+        </button>
+
+      </div>
+    </div>
+
+    <div>
+      <div class="list-head">
+        <div class="list-title">
+          Images
+          <span class="n-badge" id="n-badge">0</span>
+        </div>
+        <button class="clear-btn" id="clear-btn">clear all</button>
+      </div>
+      <div id="empty-state" class="empty-state">
+        <div class="empty-glyph">[ ]</div>
+        <div class="empty-text">no images loaded yet</div>
+      </div>
+      <div class="img-list" id="img-list" style="display:none"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="bottom-bar">
+  <div class="bar-info">
+    <strong id="bar-n">0</strong> files downloaded &nbsp;&middot;&nbsp; <span id="bar-size"></span>
+  </div>
+  <div class="bar-btns">
+    <button class="bar-btn ind" id="btn-ind">↓ Download again</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ── Feature detect ──
+  const FSAPI = typeof window.showOpenFilePicker === 'function';
+
+  const files = [];
+  let uid = 0;
+
+  const dropzone      = document.getElementById('dropzone');
+  const fileInput     = document.getElementById('file-input');
+  const pickBtn       = document.getElementById('pick-btn');
+  const fsapiNote     = document.getElementById('fsapi-note');
+  const imgList       = document.getElementById('img-list');
+  const emptyState    = document.getElementById('empty-state');
+  const nBadge        = document.getElementById('n-badge');
+  const btnProcess    = document.getElementById('btn-process');
+  const btnLbl        = document.getElementById('btn-lbl');
+  const prog          = document.getElementById('prog');
+  const toJpg         = document.getElementById('to-jpg');
+  const qWrap         = document.getElementById('q-wrap');
+  const qSlider       = document.getElementById('q-slider');
+  const qVal          = document.getElementById('q-val');
+  const gW            = document.getElementById('g-w');
+  const gH            = document.getElementById('g-h');
+  const doRename      = document.getElementById('do-rename');
+  const renameWrap    = document.getElementById('rename-wrap');
+  const renameBase    = document.getElementById('rename-base');
+  const renamePreview = document.getElementById('rename-preview');
+  const clearBtn      = document.getElementById('clear-btn');
+  const bottomBar     = document.getElementById('bottom-bar');
+  const barN          = document.getElementById('bar-n');
+  const barSize       = document.getElementById('bar-size');
+  const btnInd        = document.getElementById('btn-ind');
+
+  // Hide native input — we drive everything ourselves
+  fileInput.style.display = 'none';
+
+  if (!FSAPI) {
+    fsapiNote.textContent = 'Files will be downloaded after processing';
+  }
+
+  async function openPicker() {
+    if (FSAPI) {
+      try {
+        const handles = await window.showOpenFilePicker({
+          multiple: true,
+          startIn: 'downloads',
+          types: [{ description: 'Images', accept: { 'image/*': ['.png','.jpg','.jpeg','.webp','.gif','.bmp','.tiff','.tif'] } }]
+        });
+        addHandles(handles);
+      } catch(err) {
+        if (err.name !== 'AbortError') console.error(err);
+      }
+    } else {
+      fileInput.click();
+    }
+  }
+
+  // Clicking anywhere on the dropzone (including the button) opens the picker
+  dropzone.addEventListener('click', () => openPicker());
+
+  if (FSAPI) {
+    // Also support drag-and-drop (items API gives handles in Chrome)
+    dropzone.addEventListener('drop', async e => {
+      e.preventDefault(); dropzone.classList.remove('drag-over');
+      const handles = [];
+      for (const item of e.dataTransfer.items) {
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          if (item.getAsFileSystemHandle) {
+            const h = await item.getAsFileSystemHandle();
+            if (h.kind === 'file') handles.push(h);
+          } else {
+            // fallback: no handle, treat as plain file
+            const f = item.getAsFile();
+            if (f) addPlainFiles([f]);
+          }
+        }
+      }
+      if (handles.length) addHandles(handles);
+    });
+  }
+
+  // Drag visual (shared)
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+
+  // Non-FSAPI drop fallback
+  if (!FSAPI) {
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault(); dropzone.classList.remove('drag-over');
+      addPlainFiles([...e.dataTransfer.files].filter(f => f.type.startsWith('image/')));
+    });
+  }
+
+  fileInput.addEventListener('change', () => { addPlainFiles([...fileInput.files]); fileInput.value = ''; });
+  clearBtn.addEventListener('click', () => { files.length = 0; render(); bottomBar.classList.remove('on'); });
+
+  // ── Add via File System Access API handles ──
+  async function addHandles(handles) {
+    for (const handle of handles) {
+      const file = await handle.getFile();
+      const id = uid++;
+      const entry = { id, file, handle, img: null, origW: null, origH: null, done: false, outName: null };
+      files.push(entry);
+      preloadThumb(entry);
+    }
+    render(); updateBtn();
+  }
+
+  // ── Add plain File objects (fallback) ──
+  function addPlainFiles(list) {
+    list.forEach(f => {
+      const id = uid++;
+      const entry = { id, file: f, handle: null, img: null, origW: null, origH: null, done: false, outName: null };
+      files.push(entry);
+      preloadThumb(entry);
+    });
+    render(); updateBtn();
+  }
+
+  function preloadThumb(entry) {
+    const url = URL.createObjectURL(entry.file);
+    const img = new Image();
+    img.onload = () => {
+      entry.img = img; entry.origW = img.naturalWidth; entry.origH = img.naturalHeight;
+      const el = document.getElementById('dim-' + entry.id);
+      if (el) el.textContent = img.naturalWidth + '\xd7' + img.naturalHeight;
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }
+
+  // ── Controls ──
+  toJpg.addEventListener('change', () => { qWrap.classList.toggle('on', toJpg.checked); updatePreview(); });
+  qSlider.addEventListener('input', () => qVal.textContent = qSlider.value);
+  doRename.addEventListener('change', () => { renameWrap.classList.toggle('on', doRename.checked); updatePreview(); });
+  renameBase.addEventListener('input', updatePreview);
+
+  function updatePreview() {
+    const base = renameBase.value.trim() || 'image';
+    const ext = toJpg.checked ? 'jpg' : 'png';
+    renamePreview.innerHTML = `\u2192 <strong>${base}-1</strong>.${ext}, <strong>${base}-2</strong>.${ext} \u2026`;
+  }
+
+  // ── Render ──
+  function render() {
+    if (!files.length) {
+      emptyState.style.display = 'block'; imgList.style.display = 'none';
+      nBadge.textContent = '0'; nBadge.classList.remove('has'); return;
+    }
+    emptyState.style.display = 'none'; imgList.style.display = 'flex';
+    nBadge.textContent = files.length; nBadge.classList.add('has');
+    imgList.innerHTML = '';
+    files.forEach(entry => {
+      const ext     = getExt(entry.file.name).toUpperCase();
+      const size    = fmtBytes(entry.file.size);
+      const hasFs   = !!entry.handle;
+      const row     = document.createElement('div');
+      row.className = 'img-row' + (entry.done ? ' done' : '');
+      row.id = 'row-' + entry.id;
+      const thumbUrl = entry.blob ? URL.createObjectURL(entry.blob) : URL.createObjectURL(entry.file);
+      row.innerHTML = `
+        <img class="thumb" src="${thumbUrl}" onload="URL.revokeObjectURL(this.src)">
+        <div class="img-info">
+          <div class="img-name" title="${entry.file.name}">${entry.file.name}</div>
+          <div class="img-meta">
+            <span id="dim-${entry.id}">${entry.origW ? entry.origW+'\xd7'+entry.origH : '\u2026'}</span>
+            <span>${size}</span>
+            <span class="tag">${ext}</span>
+            ${hasFs ? '<span class="tag" style="border-color:var(--green);color:var(--green)">writable</span>' : '<span class="tag">download</span>'}
+            ${entry.done ? '<span class="tag done">saved</span>' : ''}
+          </div>
+        </div>
+        <div class="row-actions">
+          <span class="status-dot${entry.done ? ' done' : ''}" id="dot-${entry.id}"></span>
+          <button class="act-btn rm" onclick="removeFile(${entry.id})">&#x2715;</button>
+        </div>`;
+      imgList.appendChild(row);
+    });
+  }
+
+  function updateBtn() {
+    btnProcess.disabled = !files.length;
+    btnLbl.textContent = `Process & save (${files.length})`;
+  }
+
+  window.removeFile = id => {
+    const i = files.findIndex(f => f.id === id);
+    if (i !== -1) files.splice(i, 1);
+    render(); updateBtn(); updateBar();
+  };
+
+  // ── Process ──
+  btnProcess.addEventListener('click', async () => {
+    if (!files.length) return;
+    btnProcess.disabled = true;
+    prog.style.width = '0%';
+
+    const useJpg  = toJpg.checked;
+    const quality = parseInt(qSlider.value) / 100;
+    const targetW = parseInt(gW.value) || null;
+    const targetH = parseInt(gH.value) || null;
+    const rename  = doRename.checked;
+    const base    = renameBase.value.trim() || 'image';
+
+    const fallbackBlobs = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const entry = files[i];
+      setDot(entry.id, 'processing');
+      await tick();
+      try {
+        if (!entry.img) await loadImg(entry);
+        const { w, h } = calcDims(entry.origW, entry.origH, targetW, targetH);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(entry.img, 0, 0, w, h);
+
+        let mime, ext;
+        if (useJpg) { mime = 'image/jpeg'; ext = 'jpg'; }
+        else {
+          mime = normMime(entry.file.type);
+          ext  = getExt(entry.file.name);
+          if (!['image/jpeg','image/png','image/webp'].includes(mime)) { mime = 'image/png'; ext = 'png'; }
+        }
+        const qa = (mime === 'image/jpeg' || mime === 'image/webp') ? quality : undefined;
+        const blob = await new Promise(r => canvas.toBlob(r, mime, qa));
+
+        const outName = rename
+          ? `${base}-${i + 1}.${ext}`
+          : `${stripExt(entry.file.name)}.${ext}`;
+        entry.outName = outName;
+
+        // Always store blob so thumbnail stays valid after overwrite
+        entry.blob = blob;
+
+        if (entry.handle && !rename) {
+          // Overwrite in place (no rename)
+          const writable = await entry.handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          entry.done = true;
+        } else {
+          // Rename active or no handle: download
+          fallbackBlobs.push(entry);
+          entry.done = true;
+        }
+
+        setDot(entry.id, 'done');
+      } catch(err) {
+        console.error(err);
+        setDot(entry.id, 'error');
+      }
+      prog.style.width = ((i + 1) / files.length * 100) + '%';
+    }
+
+    btnProcess.disabled = false;
+    btnLbl.textContent = `Process & save (${files.length})`;
+    render();
+
+    if (fallbackBlobs.length) {
+      // Auto-download all renamed/fallback files individually
+      fallbackBlobs.forEach((f, i) => setTimeout(() => dl(f.blob, f.outName), i * 80));
+      updateBar(fallbackBlobs);
+    }
+  });
+
+  // ── Helpers ──
+  function calcDims(ow, oh, tw, th) {
+    if (tw && th) return { w: tw, h: th };
+    if (tw)       return { w: tw, h: Math.round(oh * tw / ow) };
+    if (th)       return { w: Math.round(ow * th / oh), h: th };
+    return { w: ow, h: oh };
+  }
+
+  function setDot(id, state) {
+    const el = document.getElementById('dot-' + id);
+    if (el) el.className = 'status-dot ' + state;
+  }
+
+  function updateBar(fallbackEntries) {
+    if (!fallbackEntries || !fallbackEntries.length) { bottomBar.classList.remove('on'); return; }
+    bottomBar.classList.add('on');
+    barN.textContent = fallbackEntries.length;
+    barSize.textContent = fmtBytes(fallbackEntries.reduce((s, f) => s + f.blob.size, 0)) + ' total';
+
+    btnInd._entries = fallbackEntries;
+    btnZip._entries = fallbackEntries;
+  }
+
+  btnInd.addEventListener('click', () => {
+    const entries = btnInd._entries || files.filter(f => f.blob);
+    entries.forEach((f, i) => setTimeout(() => dl(f.blob, f.outName), i * 80));
+  });
+
+  function dl(blob, name) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
+  function tick()      { return new Promise(r => setTimeout(r, 16)); }
+  function getExt(n)   { return (n.split('.').pop() || 'png').toLowerCase(); }
+  function stripExt(n) { return n.replace(/\.[^.]+$/, ''); }
+  function normMime(t) { return t === 'image/jpg' ? 'image/jpeg' : (t || 'image/png'); }
+  function fmtBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+    return (b/1048576).toFixed(2) + ' MB';
+  }
+  function loadImg(entry) {
+    return new Promise((res, rej) => {
+      const img = new Image();
+      const url = URL.createObjectURL(entry.file);
+      img.onload = () => {
+        entry.img = img; entry.origW = img.naturalWidth; entry.origH = img.naturalHeight;
+        URL.revokeObjectURL(url); res();
+      };
+      img.onerror = rej; img.src = url;
+    });
+  }
+
+  updateBtn(); updatePreview();
+})();
+</script>
+</body>
+</html>
