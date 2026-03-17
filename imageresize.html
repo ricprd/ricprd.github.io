@@ -535,20 +535,25 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
     // Also support drag-and-drop (items API gives handles in Chrome)
     dropzone.addEventListener('drop', async e => {
       e.preventDefault(); dropzone.classList.remove('drag-over');
-      const handles = [];
+      // Collect all promises FIRST synchronously before any await,
+      // because dataTransfer.items is cleared after the first await.
+      const handlePromises = [];
+      const plainFiles = [];
       for (const item of e.dataTransfer.items) {
         if (item.kind === 'file' && item.type.startsWith('image/')) {
           if (item.getAsFileSystemHandle) {
-            const h = await item.getAsFileSystemHandle();
-            if (h.kind === 'file') handles.push(h);
+            handlePromises.push(item.getAsFileSystemHandle());
           } else {
-            // fallback: no handle, treat as plain file
             const f = item.getAsFile();
-            if (f) addPlainFiles([f]);
+            if (f) plainFiles.push(f);
           }
         }
       }
+      // Now await all handles at once
+      const resolved = await Promise.all(handlePromises);
+      const handles = resolved.filter(h => h.kind === 'file');
       if (handles.length) addHandles(handles);
+      if (plainFiles.length) addPlainFiles(plainFiles);
     });
   }
 
@@ -593,12 +598,16 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
   function preloadThumb(entry) {
     const url = URL.createObjectURL(entry.file);
     const img = new Image();
-    img.onload = () => {
-      entry.img = img; entry.origW = img.naturalWidth; entry.origH = img.naturalHeight;
-      const el = document.getElementById('dim-' + entry.id);
-      if (el) el.textContent = img.naturalWidth + '\xd7' + img.naturalHeight;
-      URL.revokeObjectURL(url);
-    };
+    entry.thumbReady = new Promise((res, rej) => {
+      img.onload = () => {
+        entry.img = img; entry.origW = img.naturalWidth; entry.origH = img.naturalHeight;
+        const el = document.getElementById('dim-' + entry.id);
+        if (el) el.textContent = img.naturalWidth + '\xd7' + img.naturalHeight;
+        URL.revokeObjectURL(url);
+        res();
+      };
+      img.onerror = rej;
+    });
     img.src = url;
   }
 
@@ -682,7 +691,7 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
       setDot(entry.id, 'processing');
       await tick();
       try {
-        if (!entry.img) await loadImg(entry);
+        if (!entry.img) await entry.thumbReady;
         const { w, h } = calcDims(entry.origW, entry.origH, targetW, targetH);
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
