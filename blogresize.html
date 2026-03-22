@@ -334,7 +334,6 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
   <header>
     <div>
       <div class="brand-name">blog<span>//</span>resize</div>
-      <div class="brand-sub">client-side &middot; settings remembered &middot; no upload</div>
     </div>
   </header>
 
@@ -605,7 +604,9 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
     }
 
     btnProcess.disabled = false;
+    files.length = 0;
     render();
+    updateBtn();
   });
 
   // ── Helpers ──
