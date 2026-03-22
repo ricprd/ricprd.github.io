@@ -26,153 +26,92 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+
+html, body { height: 100%; }
 body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--sans);
   font-size: 14px;
-  min-height: 100vh;
 }
 
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg2); }
 ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
 
-.page {
+/* ── Full-viewport column layout ── */
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   max-width: 980px;
   margin: 0 auto;
-  padding: 0 28px 80px;
+  padding: 0 24px;
 }
 
+/* ── Header ── */
 header {
-  padding: 36px 0 28px;
+  flex-shrink: 0;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  align-items: center;
+  height: 52px;
   border-bottom: 2px solid var(--ink);
-  margin-bottom: 40px;
 }
 .brand-name {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1;
 }
 .brand-name span { color: var(--accent); }
-.brand-sub {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--ink3);
-  letter-spacing: 0.08em;
-  margin-top: 4px;
+
+/* ── Controls bar ── */
+.controls-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 0;
+  border-bottom: 1.5px solid var(--rule);
 }
 
-/* Dropzone */
-#dropzone {
-  border: 2px dashed var(--rule);
-  border-radius: 6px;
-  padding: 44px 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
-  margin-bottom: 36px;
-  background: var(--bg2);
+.ctrl-sep {
+  width: 1px;
+  height: 24px;
+  background: var(--rule);
+  flex-shrink: 0;
+  margin: 0 10px;
 }
-#dropzone:hover,
-#dropzone.drag-over {
-  border-color: var(--accent);
-  background: var(--accent-bg);
-}
-.dz-glyph { font-size: 38px; opacity: 0.25; margin-bottom: 12px; font-family: var(--mono); }
-.dz-label { font-size: 15px; font-weight: 700; color: var(--ink2); margin-bottom: 5px; }
-.dz-hint  { font-family: var(--mono); font-size: 11px; color: var(--ink3); letter-spacing: 0.04em; margin-bottom: 16px; }
-.pick-btn {
-  display: inline-block;
-  padding: 9px 22px;
-  background: var(--ink);
-  color: var(--bg);
-  border: none;
-  border-radius: var(--radius);
-  font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.pick-btn:hover { background: var(--accent); }
-
-/* Workspace */
-.workspace {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 28px;
-  align-items: start;
-}
-
-/* Settings card */
-.settings-card {
-  background: var(--bg);
-  border: 1.5px solid var(--rule);
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: var(--shadow);
-  position: sticky;
-  top: 20px;
-}
-.card-title {
-  padding: 12px 16px;
-  background: var(--ink);
-  color: #f5f2ed;
-  font-size: 10px;
-  font-family: var(--mono);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-.settings-body { padding: 20px 16px; }
-.s-group { margin-bottom: 22px; }
-.s-group:last-child { margin-bottom: 0; }
-.s-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  color: var(--ink3);
-  text-transform: uppercase;
-  margin-bottom: 8px;
-  display: block;
-}
-.s-hint {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--ink3);
-  margin-top: 5px;
-}
-.s-divider { height: 1px; background: var(--rule); margin: 18px 0; }
 
 /* Dimension inputs */
-.dim-row { display: grid; grid-template-columns: 1fr 14px 1fr; align-items: center; gap: 6px; }
-.dim-x { text-align: center; font-family: var(--mono); font-size: 13px; color: var(--ink3); }
+.ctrl-dims {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.dim-x { font-family: var(--mono); font-size: 13px; color: var(--ink3); }
 .px-wrap { position: relative; }
-.px-wrap input { padding-right: 28px; }
 .px-wrap::after {
   content: 'px';
-  position: absolute; right: 9px; top: 50%;
+  position: absolute; right: 7px; top: 50%;
   transform: translateY(-50%);
   font-family: var(--mono); font-size: 10px; color: var(--ink3);
   pointer-events: none;
 }
 
-/* Text + number inputs */
+input[type=number] {
+  width: 72px;
+  padding-right: 26px;
+}
 input[type=number], input[type=text] {
-  width: 100%;
   background: var(--bg2);
   border: 1.5px solid var(--rule);
   border-radius: var(--radius);
   color: var(--ink);
   font-family: var(--mono);
-  font-size: 14px;
-  padding: 8px 10px;
+  font-size: 13px;
+  padding: 7px 10px;
   outline: none;
   transition: border-color 0.15s;
   -moz-appearance: textfield;
@@ -181,26 +120,23 @@ input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
 input:focus { border-color: var(--accent); background: #fff; }
 
-/* Rename preview */
-.rename-preview {
-  font-family: var(--mono); font-size: 10px; color: var(--ink3);
-  margin-top: 6px; padding: 5px 8px;
-  background: var(--bg3); border-radius: var(--radius);
+/* Rename input — grows to fill available space */
+#rename-base {
+  flex: 1;
+  min-width: 120px;
 }
-.rename-preview strong { color: var(--accent); }
 
 /* Format segmented control */
 .seg-ctrl {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   border: 1.5px solid var(--rule);
   border-radius: var(--radius);
   overflow: hidden;
+  flex-shrink: 0;
 }
 .seg-ctrl input[type=radio] { display: none; }
 .seg-ctrl label {
-  padding: 8px;
-  text-align: center;
+  padding: 7px 13px;
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 700;
@@ -210,53 +146,119 @@ input:focus { border-color: var(--accent); background: #fff; }
   background: var(--bg2);
   transition: background 0.15s, color 0.15s;
   border-right: 1.5px solid var(--rule);
+  white-space: nowrap;
 }
 .seg-ctrl label:last-of-type { border-right: none; }
-.seg-ctrl input[type=radio]:checked + label {
-  background: var(--ink);
-  color: var(--bg);
-}
+.seg-ctrl input[type=radio]:checked + label { background: var(--ink); color: var(--bg); }
 
-/* Quality slider */
-.quality-wrap { margin-top: 14px; }
-.q-row { display: flex; align-items: center; gap: 10px; }
+/* Quality */
+#q-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
 input[type=range] {
-  flex: 1; -webkit-appearance: none;
+  width: 80px;
+  -webkit-appearance: none;
   background: var(--rule); height: 3px; border-radius: 2px;
   outline: none; cursor: pointer;
 }
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px; height: 16px;
+  width: 14px; height: 14px;
   background: var(--accent); border-radius: 50%;
   border: 2px solid #fff;
   box-shadow: 0 1px 4px rgba(200,75,47,0.3);
   cursor: pointer; transition: transform 0.1s;
 }
 input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
-.q-val { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--accent); width: 30px; text-align: right; flex-shrink: 0; }
+.q-val {
+  font-family: var(--mono); font-size: 13px; font-weight: 700;
+  color: var(--accent); width: 26px; text-align: right; flex-shrink: 0;
+}
 
 /* Process button */
 #btn-process {
-  width: 100%; margin-top: 20px; padding: 13px;
+  flex-shrink: 0;
+  padding: 8px 18px;
   background: var(--ink); color: var(--bg);
   border: none; border-radius: var(--radius);
-  font-family: var(--sans); font-size: 13px; font-weight: 700;
-  letter-spacing: 0.06em; cursor: pointer;
+  font-family: var(--sans); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.05em; cursor: pointer;
   position: relative; overflow: hidden;
   transition: background 0.2s, transform 0.1s;
+  white-space: nowrap;
 }
 #btn-process:hover:not(:disabled) { background: var(--accent); }
 #btn-process:active:not(:disabled) { transform: scale(0.98); }
 #btn-process:disabled { opacity: 0.35; cursor: not-allowed; }
 #btn-process .prog {
   position: absolute; left: 0; top: 0; bottom: 0;
-  background: rgba(255,255,255,0.1); width: 0%;
+  background: rgba(255,255,255,0.12); width: 0%;
   transition: width 0.25s; pointer-events: none;
 }
 
-/* File list */
-.list-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+/* ── Dropzone ── */
+#dropzone {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border: 2px dashed var(--rule);
+  border-radius: 6px;
+  margin: 14px 0;
+  padding: 0 24px;
+  height: 62px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+#dropzone:hover,
+#dropzone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+.dz-text {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink3);
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+.pick-btn {
+  flex-shrink: 0;
+  padding: 7px 18px;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  transition: background 0.15s;
+}
+.pick-btn:hover { background: var(--accent); }
+
+/* ── Queue area ── */
+.queue-area {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.list-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+}
 .list-title {
   font-size: 10px; font-family: var(--mono); letter-spacing: 0.14em;
   text-transform: uppercase; color: var(--ink3);
@@ -275,32 +277,39 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 }
 .clear-btn:hover { color: var(--accent); }
 
+.queue-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 16px;
+}
+
 .empty-state {
   border: 1.5px dashed var(--rule); border-radius: 6px;
-  padding: 60px 20px; text-align: center; background: var(--bg2);
+  padding: 48px 20px; text-align: center; background: var(--bg2);
 }
-.empty-glyph { font-family: var(--mono); font-size: 28px; opacity: 0.2; margin-bottom: 10px; }
+.empty-glyph { font-family: var(--mono); font-size: 24px; opacity: 0.2; margin-bottom: 8px; }
 .empty-text  { font-family: var(--mono); font-size: 11px; color: var(--ink3); letter-spacing: 0.08em; }
 
-.img-list { display: flex; flex-direction: column; gap: 6px; }
+/* ── Image rows ── */
+.img-list { display: flex; flex-direction: column; gap: 5px; }
 .img-row {
   background: #fff; border: 1.5px solid var(--rule); border-radius: 5px;
-  display: grid; grid-template-columns: 58px 1fr auto;
-  align-items: center; gap: 12px; padding: 10px 12px;
+  display: grid; grid-template-columns: 52px 1fr auto;
+  align-items: center; gap: 12px; padding: 8px 12px;
   box-shadow: var(--shadow);
   animation: fadeUp 0.18s ease;
-  transition: border-color 0.2s;
 }
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .img-row.done { border-left: 3px solid var(--green); }
 
-.thumb { width: 58px; height: 44px; object-fit: cover; border-radius: 3px; background: var(--bg3); display: block; }
+.thumb { width: 52px; height: 38px; object-fit: cover; border-radius: 3px; background: var(--bg3); display: block; }
 .img-info { min-width: 0; }
-.img-name { font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
-.img-out  { font-family: var(--mono); font-size: 10px; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+.img-name { font-size: 12px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+.img-out  { font-family: var(--mono); font-size: 10px; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
 .img-meta { font-family: var(--mono); font-size: 10px; color: var(--ink3); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .tag { padding: 1px 5px; border-radius: 2px; border: 1px solid var(--rule); font-size: 9px; letter-spacing: 0.05em; color: var(--ink3); }
 .tag.done { border-color: var(--green); color: var(--green); background: var(--green-bg); }
@@ -315,103 +324,76 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 .act-btn {
   background: none; border: 1.5px solid var(--rule); border-radius: var(--radius);
   color: var(--ink3); font-family: var(--mono); font-size: 10px;
-  padding: 3px 8px; cursor: pointer;
+  padding: 3px 7px; cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
   white-space: nowrap; letter-spacing: 0.04em;
 }
 .act-btn.rm:hover { border-color: var(--accent); color: var(--accent); }
-
-@media (max-width: 680px) {
-  .workspace { grid-template-columns: 1fr; }
-  .settings-card { position: static; }
-  header { flex-wrap: wrap; gap: 12px; }
-}
 </style>
 </head>
 <body>
-<div class="page">
+<div class="layout">
 
   <header>
-    <div>
-      <div class="brand-name">blog<span>//</span>resize</div>
-    </div>
+    <div class="brand-name">blog<span>//</span>resize</div>
   </header>
+
+  <div class="controls-bar">
+    <div class="ctrl-dims">
+      <div class="px-wrap"><input type="number" id="g-w" placeholder="W" min="1" max="99999"></div>
+      <span class="dim-x">&times;</span>
+      <div class="px-wrap"><input type="number" id="g-h" placeholder="H" min="1" max="99999"></div>
+    </div>
+
+    <div class="ctrl-sep"></div>
+
+    <input type="text" id="rename-base" placeholder="rename string&hellip;">
+
+    <div class="ctrl-sep"></div>
+
+    <div class="seg-ctrl">
+      <input type="radio" name="fmt" id="fmt-jpg" value="jpg" checked>
+      <label for="fmt-jpg">JPG</label>
+      <input type="radio" name="fmt" id="fmt-png" value="png">
+      <label for="fmt-png">PNG</label>
+    </div>
+
+    <div id="q-group">
+      <input type="range" id="q-slider" min="1" max="100" value="80">
+      <span class="q-val" id="q-val">80</span>
+    </div>
+
+    <div class="ctrl-sep"></div>
+
+    <button id="btn-process" disabled>
+      <span class="prog" id="prog"></span>
+      <span id="btn-lbl">Process &amp; download</span>
+    </button>
+  </div>
 
   <div id="dropzone">
     <input type="file" id="file-input" accept="image/*" multiple style="display:none">
-    <div class="dz-glyph">[ + ]</div>
-    <div class="dz-label">Drop images here</div>
-    <div class="dz-hint">PNG &middot; JPG &middot; WEBP &middot; GIF &middot; BMP</div>
+    <span class="dz-text">Drop images here</span>
     <button class="pick-btn" id="pick-btn" type="button">Choose files&hellip;</button>
   </div>
 
-  <div class="workspace">
-
-    <div class="settings-card">
-      <div class="card-title">Settings</div>
-      <div class="settings-body">
-
-        <div class="s-group">
-          <span class="s-label">Dimensions</span>
-          <div class="dim-row">
-            <div class="px-wrap"><input type="number" id="g-w" placeholder="width"  min="1" max="99999"></div>
-            <span class="dim-x">&times;</span>
-            <div class="px-wrap"><input type="number" id="g-h" placeholder="height" min="1" max="99999"></div>
-          </div>
-          <div class="s-hint">One blank &rarr; proportional scale</div>
-        </div>
-
-        <div class="s-divider"></div>
-
-        <div class="s-group">
-          <span class="s-label">Rename</span>
-          <input type="text" id="rename-base" placeholder="e.g. my-blog-post">
-          <div class="rename-preview" id="rename-preview">&rarr; <strong>image-1</strong>.jpg, <strong>image-2</strong>.jpg &hellip;</div>
-        </div>
-
-        <div class="s-divider"></div>
-
-        <div class="s-group">
-          <span class="s-label">Output format</span>
-          <div class="seg-ctrl">
-            <input type="radio" name="fmt" id="fmt-jpg" value="jpg" checked>
-            <label for="fmt-jpg">JPG</label>
-            <input type="radio" name="fmt" id="fmt-png" value="png">
-            <label for="fmt-png">PNG</label>
-          </div>
-          <div class="quality-wrap" id="q-wrap">
-            <span class="s-label" style="margin-top:12px;display:block">JPG quality</span>
-            <div class="q-row">
-              <input type="range" id="q-slider" min="1" max="100" value="80">
-              <span class="q-val" id="q-val">80</span>
-            </div>
-          </div>
-        </div>
-
-        <button id="btn-process" disabled>
-          <span class="prog" id="prog"></span>
-          <span id="btn-lbl">Process &amp; download</span>
-        </button>
-
+  <div class="queue-area">
+    <div class="list-head">
+      <div class="list-title">
+        Queue
+        <span class="n-badge" id="n-badge">0</span>
       </div>
+      <button class="clear-btn" id="clear-btn">clear all</button>
     </div>
-
-    <div>
-      <div class="list-head">
-        <div class="list-title">
-          Queue
-          <span class="n-badge" id="n-badge">0</span>
-        </div>
-        <button class="clear-btn" id="clear-btn">clear all</button>
-      </div>
+    <div class="queue-scroll">
       <div id="empty-state" class="empty-state">
         <div class="empty-glyph">[ ]</div>
         <div class="empty-text">no images loaded yet</div>
       </div>
       <div class="img-list" id="img-list" style="display:none"></div>
     </div>
-
   </div>
+
 </div>
 
 <script>
@@ -432,15 +414,14 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
   const gW            = document.getElementById('g-w');
   const gH            = document.getElementById('g-h');
   const renameBase    = document.getElementById('rename-base');
-  const renamePreview = document.getElementById('rename-preview');
   const clearBtn      = document.getElementById('clear-btn');
-  const qWrap         = document.getElementById('q-wrap');
+  const qGroup        = document.getElementById('q-group');
   const qSlider       = document.getElementById('q-slider');
   const qVal          = document.getElementById('q-val');
   const fmtJpg        = document.getElementById('fmt-jpg');
   const fmtPng        = document.getElementById('fmt-png');
 
-  // ── Settings persistence ──
+  // ── Settings persistence (w and h only) ──
   function loadSettings() {
     try {
       const s = JSON.parse(localStorage.getItem(SK) || '{}');
@@ -455,16 +436,13 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
     } catch(e) {}
   }
 
-  // ── Preview & quality visibility ──
-  function updatePreview() {
-    const base = renameBase.value.trim() || 'image';
-    const ext  = fmtPng.checked ? 'png' : 'jpg';
-    qWrap.style.display = fmtJpg.checked ? 'block' : 'none';
-    renamePreview.innerHTML = `&rarr; <strong>${esc(base)}-1</strong>.${ext}, <strong>${esc(base)}-2</strong>.${ext} &hellip;`;
+  // ── Quality visibility ──
+  function updateFormat() {
+    qGroup.style.display = fmtJpg.checked ? 'flex' : 'none';
     updateOutNames();
   }
 
-  // Refresh output name labels in existing list rows without full re-render
+  // Update output name labels in existing rows without full re-render
   function updateOutNames() {
     const base = renameBase.value.trim() || 'image';
     const ext  = fmtPng.checked ? 'png' : 'jpg';
@@ -510,11 +488,11 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
     img.src = url;
   }
 
-  // ── Setting change listeners ──
+  // ── Control listeners ──
   [gW, gH].forEach(el => el.addEventListener('input', saveSettings));
-  renameBase.addEventListener('input', updatePreview);
-  fmtJpg.addEventListener('change', updatePreview);
-  fmtPng.addEventListener('change', updatePreview);
+  renameBase.addEventListener('input', updateOutNames);
+  fmtJpg.addEventListener('change', updateFormat);
+  fmtPng.addEventListener('change', updateFormat);
   qSlider.addEventListener('input', () => { qVal.textContent = qSlider.value; });
 
   // ── Render ──
@@ -557,8 +535,8 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
   }
 
   function updateBtn() {
-    btnProcess.disabled  = !files.length;
-    btnLbl.textContent   = files.length ? `Process & download (${files.length})` : 'Process & download';
+    btnProcess.disabled = !files.length;
+    btnLbl.textContent  = files.length ? `Process & download (${files.length})` : 'Process & download';
   }
 
   window.removeFile = id => {
@@ -646,7 +624,7 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 
   // ── Init ──
   loadSettings();
-  updatePreview();
+  updateFormat();
   updateBtn();
 })();
 </script>
