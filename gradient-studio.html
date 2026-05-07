@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chroma Lab — Gradient Studio</title>
+<style>
+  /* ---------- Reset & base ---------- */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1a1a;
+    --paper: #f4ede1;
+    --paper-2: #ebe2d0;
+    --rule: #1a1a1a;
+    --accent: #d94a1f;
+    --accent-2: #2c5f4e;
+    --muted: #6b6356;
+    --shadow: 0 2px 0 var(--ink);
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: 'Fraunces', 'Cormorant Garamond', Georgia, serif;
+    background: var(--paper);
+    color: var(--ink);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(26,26,26,0.08) 1px, transparent 0);
+    background-size: 18px 18px;
+    min-height: 100vh;
+  }
+
+  .mono { font-family: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace; }
+
+  /* ---------- Layout ---------- */
+  .frame {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 40px 80px;
+  }
+
+  header.masthead {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 20px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+  .brand h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: clamp(36px, 5vw, 64px);
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+  .brand .ornament {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 22px 0 0 var(--accent-2), 44px 0 0 var(--ink);
+    margin-left: 4px;
+    transform: translateY(-6px);
+  }
+
+  .meta {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: right;
+  }
+  .meta .issue { color: var(--ink); font-weight: 600; }
+
+  /* ---------- Main grid ---------- */
+  .studio {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .studio { grid-template-columns: 1fr; }
+    .frame { padding: 20px 18px 60px; }
+  }
+
+  /* ---------- Panels ---------- */
+  .panel {
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    box-shadow: var(--shadow);
+  }
+
+  .panel-head {
+    border-bottom: 2px solid var(--ink);
+    padding: 10px 14px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-head .num {
+    background: var(--accent);
+    color: var(--paper);
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+
+  .panel-body { padding: 18px 16px; }
+
+  /* ---------- Gradient types selector ---------- */
+  .types {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .type-btn {
+    appearance: none;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    padding: 10px 8px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-align: left;
+    color: var(--ink);
+    transition: all 0.15s ease;
+    position: relative;
+  }
+  .type-btn:hover { background: var(--paper-2); }
+  .type-btn.active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .type-btn.active::after {
+    content: '●';
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    color: var(--accent);
+    font-size: 8px;
+  }
+
+  /* ---------- Color stops ---------- */
+  .stops { display: flex; flex-direction: column; gap: 8px; }
+  .stop {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper-2);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+  .stop.dragging {
+    opacity: 0.4;
+  }
+  .stop.drag-over-top {
+    box-shadow: inset 0 3px 0 var(--accent);
+  }
+  .stop.drag-over-bottom {
+    box-shadow: inset 0 -3px 0 var(--accent);
+  }
+  .stop-handle {
+    cursor: grab;
+    width: 18px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 2px;
+    color: var(--muted);
+    user-select: none;
+    transition: color 0.15s ease;
+  }
+  .stop-handle:hover { color: var(--ink); }
+  .stop-handle:active { cursor: grabbing; }
+  .stop-handle span {
+    display: block;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+  }
+  .stop-swatch {
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--ink);
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .stop-swatch input[type="color"] {
+    position: absolute;
+    inset: -2px;
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    padding: 0;
+  }
+  .stop-hex {
+    flex: 1;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    outline: none;
+    width: 100%;
+  }
+  .stop-remove {
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    width: 28px; height: 28px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: all 0.1s ease;
+  }
+  .stop-remove:hover { background: var(--accent); color: var(--paper); }
+  .stop-remove:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .stop-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    appearance: none;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    padding: 9px 12px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    color: var(--ink);
+    transition: transform 0.08s ease, background 0.15s ease, color 0.15s ease;
+    flex: 1;
+    text-align: center;
+  }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary {
+    background: var(--accent);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .btn.primary:hover { background: var(--ink); }
+  .btn.full { flex: none; width: 100%; }
+
+  /* ---------- Slider ---------- */
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .slider-row label {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    width: 60px;
+  }
+  .slider-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+  }
+  .slider-row .val {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    width: 36px;
+    text-align: right;
+  }
+
+  /* ---------- Preview ---------- */
+  .preview-wrap {
+    position: relative;
+  }
+  .preview-canvas-holder {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    background: #000;
+    overflow: hidden;
+    border-bottom: 2px solid var(--ink);
+  }
+  #previewCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .preview-frame-info {
+    position: absolute;
+    top: 12px; left: 12px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.45);
+    padding: 5px 9px;
+    border: 1px solid rgba(255,255,255,0.3);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  /* ---------- Download zone ---------- */
+  .download-zone {
+    padding: 18px 16px;
+    border-top: 0;
+  }
+  .download-zone h3 {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .resolutions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+  }
+  .res-btn {
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    padding: 12px;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    transition: all 0.15s ease;
+  }
+  .res-btn:hover { background: var(--ink); color: var(--paper); }
+  .res-btn:hover .res-sub { color: var(--paper-2); }
+  .res-btn .res-name {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .res-btn .res-sub {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+  .res-btn .res-icon {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 1.5px solid currentColor;
+    margin-right: 6px;
+    vertical-align: -1px;
+  }
+  .res-btn[data-orient="portrait"] .res-icon {
+    width: 8px; height: 12px;
+  }
+
+  /* ---------- Description / hints ---------- */
+  .hint {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    padding: 12px 14px;
+    border: 1.5px dashed var(--ink);
+    background: var(--paper-2);
+    margin-top: 14px;
+  }
+
+  .learn-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 8px 12px;
+    font-size: 10.5px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    transition: all 0.15s ease;
+  }
+  .learn-more:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .learn-more span {
+    transition: transform 0.15s ease;
+    display: inline-block;
+  }
+  .learn-more:hover span {
+    transform: translate(2px, -2px);
+  }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 20px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: 2px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--accent);
+    z-index: 100;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ---------- Footer credit ---------- */
+  footer.footnote {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--ink);
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* ---------- Embedded font (system fallback chain since we're offline) ---------- */
+  /* We rely on font fallbacks. Fraunces/JetBrains Mono won't be available offline,
+     but the fallbacks (Georgia, ui-monospace) keep the editorial feel. */
+
+</style>
+</head>
+<body>
+  <div class="frame">
+    <header class="masthead">
+      <div class="brand">
+        <h1>Chroma<br>Lab</h1>
+        <span class="ornament" aria-hidden="true"></span>
+      </div>
+      <div class="meta">
+        <div class="issue">Vol. 01 / Gradient Studio</div>
+        <div>Eight species · One canvas · Infinite blends</div>
+      </div>
+    </header>
+
+    <main class="studio">
+      <!-- LEFT: Controls -->
+      <aside>
+        <section class="panel" style="margin-bottom: 20px;">
+          <div class="panel-head">
+            <span>Gradient Type</span><span class="num">01</span>
+          </div>
+          <div class="panel-body">
+            <div class="types" id="typeButtons">
+              <!-- Filled by JS -->
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" style="margin-bottom: 20px;">
+          <div class="panel-head">
+            <span>Color Stops</span><span class="num">02</span>
+          </div>
+          <div class="panel-body">
+            <div class="stops" id="stops"></div>
+            <div class="stop-actions">
+              <button class="btn" id="addStop">+ Add stop</button>
+              <button class="btn" id="randomize">⚡ Randomize</button>
+            </div>
+            <div class="slider-row">
+              <label>Angle</label>
+              <input type="range" id="angle" min="0" max="360" value="135">
+              <span class="val mono" id="angleVal">135°</span>
+            </div>
+            <div class="slider-row">
+              <label>Spread</label>
+              <input type="range" id="spread" min="20" max="200" value="100">
+              <span class="val mono" id="spreadVal">100</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <span>Notes</span><span class="num">03</span>
+          </div>
+          <div class="panel-body">
+            <p class="hint" id="typeHint">Select a gradient type to see notes about it.</p>
+            <a class="learn-more mono" href="https://icons8.com/blog/articles/types-of-gradients-and-how-to-use-them/" target="_blank" rel="noopener noreferrer">
+              Learn more <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </section>
+      </aside>
+
+      <!-- RIGHT: Preview & Download -->
+      <section>
+        <div class="panel preview-wrap">
+          <div class="panel-head">
+            <span id="previewLabel">Live Preview</span>
+            <span class="num">Aa</span>
+          </div>
+          <div class="preview-canvas-holder">
+            <canvas id="previewCanvas" width="1280" height="800"></canvas>
+            <div class="preview-frame-info mono" id="frameInfo">LINEAR</div>
+          </div>
+          <div class="download-zone">
+            <h3>Export Wallpaper · Native resolution rendering</h3>
+            <div class="resolutions" id="resolutions">
+              <button class="res-btn" data-w="1920" data-h="1080" data-orient="landscape">
+                <div class="res-name"><span class="res-icon"></span>Desktop FHD</div>
+                <div class="res-sub">1920 × 1080</div>
+              </button>
+              <button class="res-btn" data-w="2560" data-h="1440" data-orient="landscape">
+                <div class="res-name"><span class="res-icon"></span>Desktop QHD</div>
+                <div class="res-sub">2560 × 1440</div>
+              </button>
+              <button class="res-btn" data-w="3840" data-h="2160" data-orient="landscape">
+                <div class="res-name"><span class="res-icon"></span>Desktop 4K</div>
+                <div class="res-sub">3840 × 2160</div>
+              </button>
+              <button class="res-btn" data-w="1080" data-h="2340" data-orient="portrait">
+                <div class="res-name"><span class="res-icon"></span>iPhone 12 Mini</div>
+                <div class="res-sub">1080 × 2340</div>
+              </button>
+              <button class="res-btn" data-w="1320" data-h="2868" data-orient="portrait">
+                <div class="res-name"><span class="res-icon"></span>iPhone 17 Pro Max</div>
+                <div class="res-sub">1320 × 2868</div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <footer class="footnote">
+          <span>Eight gradient species, eight pieces of paper.</span>
+          <span>Renders at native res — no stretching.</span>
+        </footer>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast mono" id="toast">Wallpaper saved</div>
+
+<script>
+/* =========================================================
+   CHROMA LAB — Gradient Studio
+   All gradients render directly to a canvas at the chosen
+   output resolution. Mobile portrait sizes are rendered
+   natively (not by stretching a horizontal image).
+   ========================================================= */
+
+const TYPES = [
+  { id: 'linear',    label: 'Linear',     hint: 'The classic. A straight-line transition between colors. Angle controls direction.' },
+  { id: 'reflected', label: 'Reflected',  hint: 'Linear with a mirror — colors meet at the center and diffuse outward symmetrically.' },
+  { id: 'radial',    label: 'Radial',     hint: 'Color radiates from a center point in a circle or ellipse. Great for halos and spotlights.' },
+  { id: 'angular',   label: 'Angular',    hint: 'Also called conic. Color sweeps around a point, creating a 3D cone-like illusion.' },
+  { id: 'diamond',   label: 'Diamond',    hint: 'Like radial but cross-shaped — color spreads outward in a diamond figure.' },
+  { id: 'mesh',      label: 'Mesh',       hint: 'Multiple soft color blobs blended together. Most "trendy" gradients are mesh.' },
+  { id: 'shapeblur', label: 'Shape Blur', hint: 'Random free-form blobs with heavy blur. Feels organic and lazy in the best way.' },
+  { id: 'freeform',  label: 'Freeform',   hint: 'Anchor points emit color and blend freely — paths of color you can scatter anywhere.' },
+  { id: 'aurora',    label: 'Aurora',     hint: 'Streaky polar-light look. Built with overlapping curved bands of soft color.' },
+  { id: 'multiple',  label: 'Multiple',   hint: 'Combine basic gradients in one frame for richer, more intricate compositions.' },
+];
+
+// ---------- State ----------
+const state = {
+  type: 'linear',
+  stops: [
+    { hex: '#ff5e62' },
+    { hex: '#ff9966' },
+    { hex: '#5b6cff' },
+  ],
+  angle: 135,
+  spread: 100,
+  // Stable seeds for procedural gradients so the preview matches the export
+  seed: 12345,
+};
+
+// ---------- Utilities ----------
+function rand(seed) {
+  // Mulberry32 for deterministic randomness
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function hexToRgb(hex) {
+  hex = hex.replace('#','');
+  if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+  const n = parseInt(hex, 16);
+  return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
+}
+function rgbToHex(r,g,b) {
+  return '#' + [r,g,b].map(v => clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join('');
+}
+function randomNicePalette() {
+  // Generate aesthetically tuned palettes using HSL with controlled spacing
+  const baseHue = Math.random() * 360;
+  const scheme = Math.random();
+  const hueOffsets = scheme < 0.33
+    ? [0, 30, 60]                // analogous
+    : scheme < 0.66
+    ? [0, 150, 210]              // triadic-ish
+    : [0, 180, 60];              // split complementary
+  const sat = 65 + Math.random()*25;
+  const lightBase = 55 + Math.random()*15;
+  return hueOffsets.map((off, i) => {
+    const h = (baseHue + off + (Math.random()-0.5)*15) % 360;
+    const l = clamp(lightBase + (i-1)*8 + (Math.random()-0.5)*10, 30, 75);
+    return hslToHex(h, sat, l);
+  });
+}
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const k = n => (n + h/30) % 12;
+  const a = s * Math.min(l, 1-l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)));
+  return rgbToHex(f(0)*255, f(8)*255, f(4)*255);
+}
+
+// ---------- Render functions (all take ctx, w, h, opts) ----------
+function fillBg(ctx, w, h, hex) {
+  ctx.fillStyle = hex;
+  ctx.fillRect(0,0,w,h);
+}
+
+function renderLinear(ctx, w, h, opts) {
+  const angle = (opts.angle - 90) * Math.PI / 180;
+  // Project a line through the center along the angle, find intersection with rectangle
+  const cx = w/2, cy = h/2;
+  const len = Math.abs(Math.cos(angle))*w + Math.abs(Math.sin(angle))*h;
+  const dx = Math.cos(angle) * len/2;
+  const dy = Math.sin(angle) * len/2;
+  const grad = ctx.createLinearGradient(cx-dx, cy-dy, cx+dx, cy+dy);
+  opts.stops.forEach((s, i) => grad.addColorStop(i/(opts.stops.length-1), s.hex));
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,w,h);
+}
+
+function renderReflected(ctx, w, h, opts) {
+  const angle = (opts.angle - 90) * Math.PI / 180;
+  const cx = w/2, cy = h/2;
+  const len = Math.abs(Math.cos(angle))*w + Math.abs(Math.sin(angle))*h;
+  const dx = Math.cos(angle) * len/2;
+  const dy = Math.sin(angle) * len/2;
+  const grad = ctx.createLinearGradient(cx-dx, cy-dy, cx+dx, cy+dy);
+  // Mirror the stops: A B C → A B C B A
+  const n = opts.stops.length;
+  const total = n*2 - 1;
+  for (let i = 0; i < total; i++) {
+    const idx = i < n ? i : (total - 1 - i);
+    grad.addColorStop(i/(total-1), opts.stops[idx].hex);
+  }
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,w,h);
+}
+
+function renderRadial(ctx, w, h, opts) {
+  fillBg(ctx, w, h, opts.stops[opts.stops.length-1].hex);
+  const cx = w/2, cy = h/2;
+  const r = Math.max(w,h) * (opts.spread/100) * 0.7;
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  opts.stops.forEach((s, i) => grad.addColorStop(i/(opts.stops.length-1), s.hex));
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,w,h);
+}
+
+function renderAngular(ctx, w, h, opts) {
+  // Conic gradient via canvas (supported in modern browsers)
+  const cx = w/2, cy = h/2;
+  const startAngle = (opts.angle - 90) * Math.PI / 180;
+  if (typeof ctx.createConicGradient === 'function') {
+    const grad = ctx.createConicGradient(startAngle, cx, cy);
+    const n = opts.stops.length;
+    // Loop the gradient back to the first color for seamless conic
+    for (let i = 0; i < n; i++) {
+      grad.addColorStop(i/n, opts.stops[i].hex);
+    }
+    grad.addColorStop(1, opts.stops[0].hex);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,w,h);
+  } else {
+    // Fallback: draw wedges
+    const n = opts.stops.length;
+    const seg = (Math.PI*2) / 360;
+    for (let a = 0; a < 360; a++) {
+      const t = a/360;
+      const idx = Math.floor(t*n);
+      const localT = (t*n) - idx;
+      const c1 = hexToRgb(opts.stops[idx % n].hex);
+      const c2 = hexToRgb(opts.stops[(idx+1) % n].hex);
+      const r = Math.round(c1.r + (c2.r-c1.r)*localT);
+      const g = Math.round(c1.g + (c2.g-c1.g)*localT);
+      const b = Math.round(c1.b + (c2.b-c1.b)*localT);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, Math.hypot(w,h), startAngle + a*seg, startAngle + (a+1.5)*seg);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+}
+
+function renderDiamond(ctx, w, h, opts) {
+  // Use canvas pixel manipulation for accurate diamond falloff (Chebyshev / Manhattan)
+  fillBg(ctx, w, h, opts.stops[0].hex);
+  const cx = w/2, cy = h/2;
+  // Build a 1D color ramp lookup
+  const ramp = buildRamp(opts.stops, 256);
+  const maxDist = (Math.abs(w/2) + Math.abs(h/2)) * (opts.spread/100);
+  // For performance on large canvases, render at lower res then scale
+  const scale = w * h > 2_500_000 ? 0.5 : 1;
+  const sw = Math.max(1, Math.round(w*scale));
+  const sh = Math.max(1, Math.round(h*scale));
+  const off = document.createElement('canvas');
+  off.width = sw; off.height = sh;
+  const octx = off.getContext('2d');
+  const img = octx.createImageData(sw, sh);
+  const data = img.data;
+  const sCx = sw/2, sCy = sh/2;
+  const sMax = (Math.abs(sw/2) + Math.abs(sh/2)) * (opts.spread/100);
+  for (let y = 0; y < sh; y++) {
+    for (let x = 0; x < sw; x++) {
+      // Manhattan distance gives a diamond
+      const d = (Math.abs(x - sCx) + Math.abs(y - sCy)) / sMax;
+      const t = clamp(d, 0, 1);
+      const c = ramp[Math.floor(t*255)];
+      const idx = (y*sw + x)*4;
+      data[idx] = c[0]; data[idx+1] = c[1]; data[idx+2] = c[2]; data[idx+3] = 255;
+    }
+  }
+  octx.putImageData(img, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(off, 0, 0, w, h);
+}
+
+function buildRamp(stops, size) {
+  const ramp = new Array(size);
+  const n = stops.length;
+  const rgb = stops.map(s => hexToRgb(s.hex));
+  for (let i = 0; i < size; i++) {
+    const t = i/(size-1);
+    const seg = t * (n-1);
+    const a = Math.floor(seg);
+    const b = Math.min(n-1, a+1);
+    const f = seg - a;
+    ramp[i] = [
+      Math.round(rgb[a].r + (rgb[b].r-rgb[a].r)*f),
+      Math.round(rgb[a].g + (rgb[b].g-rgb[a].g)*f),
+      Math.round(rgb[a].b + (rgb[b].b-rgb[a].b)*f),
+    ];
+  }
+  return ramp;
+}
+
+function renderMesh(ctx, w, h, opts) {
+  // Fill base color, then composite multiple soft radial blobs
+  fillBg(ctx, w, h, opts.stops[0].hex);
+  const r = rand(opts.seed);
+  const blobs = Math.max(opts.stops.length, 5);
+  const minDim = Math.min(w, h);
+  for (let i = 0; i < blobs; i++) {
+    const stop = opts.stops[i % opts.stops.length];
+    const cx = r() * w;
+    const cy = r() * h;
+    const radius = minDim * (0.35 + r()*0.55) * (opts.spread/100);
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    const rgb = hexToRgb(stop.hex);
+    grad.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},0.95)`);
+    grad.addColorStop(0.5, `rgba(${rgb.r},${rgb.g},${rgb.b},0.55)`);
+    grad.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,w,h);
+  }
+}
+
+function renderShapeBlur(ctx, w, h, opts) {
+  // Like mesh but with elongated, asymmetric blobs and stronger blur
+  fillBg(ctx, w, h, opts.stops[0].hex);
+  const r = rand(opts.seed + 7);
+  const minDim = Math.min(w, h);
+  const blurAmt = minDim * 0.08;
+  ctx.save();
+  ctx.filter = `blur(${blurAmt}px)`;
+  const blobs = opts.stops.length * 2;
+  for (let i = 0; i < blobs; i++) {
+    const stop = opts.stops[i % opts.stops.length];
+    const cx = r() * w;
+    const cy = r() * h;
+    const rx = minDim * (0.2 + r()*0.4) * (opts.spread/100);
+    const ry = minDim * (0.2 + r()*0.4) * (opts.spread/100);
+    const rot = r() * Math.PI * 2;
+    ctx.fillStyle = stop.hex;
+    ctx.globalAlpha = 0.7 + r()*0.3;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, rot, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
+function renderFreeform(ctx, w, h, opts) {
+  // Anchor-point based: place colored points, blend smoothly
+  // Implemented as a weighted-distance blend at lower res for performance
+  const ramp = buildRamp(opts.stops, 256);
+  const r = rand(opts.seed + 13);
+  const n = Math.max(opts.stops.length, 4) + 2;
+  const points = [];
+  for (let i = 0; i < n; i++) {
+    points.push({
+      x: r() * w,
+      y: r() * h,
+      rgb: hexToRgb(opts.stops[i % opts.stops.length].hex)
+    });
+  }
+  // Render at reduced resolution
+  const scale = w*h > 2_000_000 ? 0.4 : (w*h > 800_000 ? 0.6 : 1);
+  const sw = Math.max(1, Math.round(w*scale));
+  const sh = Math.max(1, Math.round(h*scale));
+  const off = document.createElement('canvas');
+  off.width = sw; off.height = sh;
+  const octx = off.getContext('2d');
+  const img = octx.createImageData(sw, sh);
+  const data = img.data;
+  // Scale points
+  const pts = points.map(p => ({ x: p.x*scale, y: p.y*scale, rgb: p.rgb }));
+  const power = 2.5; // IDW power
+  for (let y = 0; y < sh; y++) {
+    for (let x = 0; x < sw; x++) {
+      let totalW = 0, R = 0, G = 0, B = 0;
+      for (const p of pts) {
+        const dx = x - p.x, dy = y - p.y;
+        const d2 = dx*dx + dy*dy + 1;
+        const wgt = 1 / Math.pow(d2, power/2);
+        totalW += wgt;
+        R += p.rgb.r * wgt;
+        G += p.rgb.g * wgt;
+        B += p.rgb.b * wgt;
+      }
+      const idx = (y*sw + x)*4;
+      data[idx] = R/totalW;
+      data[idx+1] = G/totalW;
+      data[idx+2] = B/totalW;
+      data[idx+3] = 255;
+    }
+  }
+  octx.putImageData(img, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(off, 0, 0, w, h);
+}
+
+function renderAurora(ctx, w, h, opts) {
+  // Dark base, then streaky bands rendered as blurred bezier ribbons
+  fillBg(ctx, w, h, '#0a0a1a');
+  const r = rand(opts.seed + 21);
+  const minDim = Math.min(w, h);
+  const blurAmt = minDim * 0.06;
+  ctx.save();
+  ctx.filter = `blur(${blurAmt}px)`;
+  ctx.globalCompositeOperation = 'lighter';
+
+  const bands = Math.max(opts.stops.length, 4);
+  for (let i = 0; i < bands; i++) {
+    const stop = opts.stops[i % opts.stops.length];
+    const rgb = hexToRgb(stop.hex);
+    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.55)`;
+
+    // A wavy ribbon across the canvas
+    const baseY = r() * h;
+    const amp = h * (0.15 + r()*0.25);
+    const thickness = h * (0.08 + r()*0.12);
+    const phase = r() * Math.PI * 2;
+    const freq = 1 + r()*1.5;
+
+    ctx.beginPath();
+    const steps = 40;
+    // Top edge
+    for (let s = 0; s <= steps; s++) {
+      const x = (s/steps) * w;
+      const y = baseY + Math.sin(s/steps * Math.PI * freq + phase) * amp - thickness/2;
+      if (s===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    // Bottom edge
+    for (let s = steps; s >= 0; s--) {
+      const x = (s/steps) * w;
+      const y = baseY + Math.sin(s/steps * Math.PI * freq + phase) * amp + thickness/2;
+      ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function renderMultiple(ctx, w, h, opts) {
+  // Combination: a linear base + several soft radial highlights
+  renderLinear(ctx, w, h, opts);
+  const r = rand(opts.seed + 41);
+  const minDim = Math.min(w, h);
+  ctx.save();
+  ctx.globalCompositeOperation = 'overlay';
+  const passes = Math.max(opts.stops.length, 3);
+  for (let i = 0; i < passes; i++) {
+    const stop = opts.stops[(i+1) % opts.stops.length];
+    const rgb = hexToRgb(stop.hex);
+    const cx = r()*w;
+    const cy = r()*h;
+    const radius = minDim * (0.3 + r()*0.5);
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    grad.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},0.7)`);
+    grad.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,w,h);
+  }
+  ctx.restore();
+  // Add a subtle reflected hint on top
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  ctx.globalCompositeOperation = 'screen';
+  const rgrad = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, Math.max(w,h)/2);
+  rgrad.addColorStop(0, opts.stops[0].hex);
+  rgrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = rgrad;
+  ctx.fillRect(0,0,w,h);
+  ctx.restore();
+}
+
+const RENDERERS = {
+  linear: renderLinear,
+  reflected: renderReflected,
+  radial: renderRadial,
+  angular: renderAngular,
+  diamond: renderDiamond,
+  mesh: renderMesh,
+  shapeblur: renderShapeBlur,
+  freeform: renderFreeform,
+  aurora: renderAurora,
+  multiple: renderMultiple,
+};
+
+function renderTo(canvas, w, h) {
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const fn = RENDERERS[state.type];
+  fn(ctx, w, h, {
+    stops: state.stops,
+    angle: state.angle,
+    spread: state.spread,
+    seed: state.seed,
+  });
+}
+
+// ---------- UI ----------
+const previewCanvas = document.getElementById('previewCanvas');
+const typeButtons = document.getElementById('typeButtons');
+const stopsEl = document.getElementById('stops');
+const angleEl = document.getElementById('angle');
+const angleVal = document.getElementById('angleVal');
+const spreadEl = document.getElementById('spread');
+const spreadVal = document.getElementById('spreadVal');
+const typeHint = document.getElementById('typeHint');
+const frameInfo = document.getElementById('frameInfo');
+const previewLabel = document.getElementById('previewLabel');
+
+// Build type buttons
+TYPES.forEach(t => {
+  const btn = document.createElement('button');
+  btn.className = 'type-btn';
+  btn.dataset.type = t.id;
+  btn.textContent = t.label;
+  btn.addEventListener('click', () => selectType(t.id));
+  typeButtons.appendChild(btn);
+});
+
+function selectType(id) {
+  state.type = id;
+  // Update active state
+  document.querySelectorAll('.type-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.type === id);
+  });
+  const t = TYPES.find(x => x.id === id);
+  typeHint.textContent = t.hint;
+  previewLabel.textContent = `Live Preview · ${t.label}`;
+  // Some types ignore angle/spread — leave controls visible but rerender
+  render();
+}
+
+function buildStopRows() {
+  stopsEl.innerHTML = '';
+  state.stops.forEach((stop, i) => {
+    const row = document.createElement('div');
+    row.className = 'stop';
+    row.draggable = true;
+    row.dataset.i = i;
+    row.innerHTML = `
+      <div class="stop-handle" title="Drag to reorder" aria-label="Drag handle">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="stop-swatch" style="background:${stop.hex}">
+        <input type="color" value="${stop.hex}" data-i="${i}" aria-label="Color stop ${i+1}">
+      </div>
+      <input type="text" class="stop-hex" value="${stop.hex.toUpperCase()}" data-i="${i}" maxlength="7">
+      <button class="stop-remove" data-i="${i}" ${state.stops.length<=2?'disabled':''} aria-label="Remove stop">×</button>
+    `;
+    stopsEl.appendChild(row);
+  });
+  // Wire events
+  // IMPORTANT: do NOT rebuild the stop rows on every color tweak — that destroys
+  // the active <input type="color"> and slams the picker closed. Instead, update
+  // the swatch background and hex text in place, and only update state.
+  stopsEl.querySelectorAll('input[type="color"]').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const i = +e.target.dataset.i;
+      const hex = e.target.value;
+      state.stops[i].hex = hex;
+      // Update swatch + hex field in place
+      const row = e.target.closest('.stop');
+      const swatch = row.querySelector('.stop-swatch');
+      const hexInput = row.querySelector('.stop-hex');
+      swatch.style.background = hex;
+      hexInput.value = hex.toUpperCase();
+      render();
+    });
+  });
+  stopsEl.querySelectorAll('.stop-hex').forEach(inp => {
+    inp.addEventListener('change', e => {
+      let v = e.target.value.trim();
+      if (!v.startsWith('#')) v = '#' + v;
+      if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(v)) {
+        const i = +e.target.dataset.i;
+        // Normalize 3-char hex to 6-char
+        if (v.length === 4) {
+          v = '#' + v.slice(1).split('').map(c => c+c).join('');
+        }
+        state.stops[i].hex = v;
+        const row = e.target.closest('.stop');
+        const swatch = row.querySelector('.stop-swatch');
+        const colorInput = row.querySelector('input[type="color"]');
+        swatch.style.background = v;
+        colorInput.value = v;
+        e.target.value = v.toUpperCase();
+        render();
+      } else {
+        e.target.value = state.stops[+e.target.dataset.i].hex.toUpperCase();
+      }
+    });
+  });
+  stopsEl.querySelectorAll('.stop-remove').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const i = +e.target.dataset.i;
+      if (state.stops.length > 2) {
+        state.stops.splice(i, 1);
+        buildStopRows();
+        render();
+      }
+    });
+  });
+
+  // ---------- Drag & drop reordering ----------
+  // Track which row is being dragged. We use the dataset index as the source
+  // of truth since the DOM order matches the array order at the start of the drag.
+  let dragSrcIndex = null;
+
+  stopsEl.querySelectorAll('.stop').forEach(row => {
+    row.addEventListener('dragstart', e => {
+      // Don't start a drag if the user is interacting with an input
+      if (e.target.closest('input, button')) {
+        e.preventDefault();
+        return;
+      }
+      dragSrcIndex = +row.dataset.i;
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      // Firefox needs setData to actually fire drag events
+      e.dataTransfer.setData('text/plain', String(dragSrcIndex));
+    });
+
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      stopsEl.querySelectorAll('.stop').forEach(r => {
+        r.classList.remove('drag-over-top', 'drag-over-bottom');
+      });
+      dragSrcIndex = null;
+    });
+
+    row.addEventListener('dragover', e => {
+      e.preventDefault(); // required to allow drop
+      e.dataTransfer.dropEffect = 'move';
+      const targetIndex = +row.dataset.i;
+      if (dragSrcIndex === null || targetIndex === dragSrcIndex) return;
+      // Show indicator on top half or bottom half
+      const rect = row.getBoundingClientRect();
+      const above = (e.clientY - rect.top) < rect.height / 2;
+      row.classList.toggle('drag-over-top', above);
+      row.classList.toggle('drag-over-bottom', !above);
+    });
+
+    row.addEventListener('dragleave', () => {
+      row.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      const targetIndex = +row.dataset.i;
+      if (dragSrcIndex === null || targetIndex === dragSrcIndex) return;
+      const rect = row.getBoundingClientRect();
+      const above = (e.clientY - rect.top) < rect.height / 2;
+      // Compute insertion index. We want the item to land "above" or "below"
+      // the target. After removing the source, indices shift, so handle that.
+      const moved = state.stops.splice(dragSrcIndex, 1)[0];
+      let insertAt = targetIndex;
+      if (dragSrcIndex < targetIndex) insertAt -= 1; // shift left after removal
+      if (!above) insertAt += 1;
+      insertAt = Math.max(0, Math.min(state.stops.length, insertAt));
+      state.stops.splice(insertAt, 0, moved);
+      buildStopRows();
+      render();
+    });
+  });
+}
+
+document.getElementById('addStop').addEventListener('click', () => {
+  if (state.stops.length >= 8) return;
+  // Add an interpolated color or a random new one
+  const palette = randomNicePalette();
+  state.stops.push({ hex: palette[Math.floor(Math.random()*palette.length)] });
+  buildStopRows();
+  render();
+});
+
+document.getElementById('randomize').addEventListener('click', () => {
+  const palette = randomNicePalette();
+  // Keep the stop count, randomize colors
+  state.stops = state.stops.map((_, i) => ({ hex: palette[i % palette.length] }));
+  // If we have more stops than palette colors, fill with extras
+  if (state.stops.length > palette.length) {
+    for (let i = palette.length; i < state.stops.length; i++) {
+      state.stops[i] = { hex: hslToHex(Math.random()*360, 70, 60) };
+    }
+  }
+  state.seed = Math.floor(Math.random() * 100000);
+  buildStopRows();
+  render();
+});
+
+angleEl.addEventListener('input', e => {
+  state.angle = +e.target.value;
+  angleVal.textContent = state.angle + '°';
+  render();
+});
+spreadEl.addEventListener('input', e => {
+  state.spread = +e.target.value;
+  spreadVal.textContent = state.spread;
+  render();
+});
+
+// Resolution buttons
+document.querySelectorAll('.res-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const w = +btn.dataset.w;
+    const h = +btn.dataset.h;
+    downloadAtSize(w, h);
+  });
+});
+
+function downloadAtSize(w, h) {
+  // Render at native resolution
+  const exportCanvas = document.createElement('canvas');
+  renderTo(exportCanvas, w, h);
+  exportCanvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ts = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+    a.href = url;
+    a.download = `chromalab-${state.type}-${w}x${h}-${ts}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast(`Saved · ${w}×${h}`);
+  }, 'image/png');
+}
+
+const toastEl = document.getElementById('toast');
+let toastTimer;
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+}
+
+function render() {
+  // Render preview at a reasonable resolution that matches preview aspect ratio (16:10)
+  renderTo(previewCanvas, 1280, 800);
+  frameInfo.textContent = state.type.toUpperCase();
+}
+
+// ---------- Init ----------
+buildStopRows();
+selectType('linear');
+angleVal.textContent = state.angle + '°';
+spreadVal.textContent = state.spread;
+</script>
+</body>
+</html>
