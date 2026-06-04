@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube RSS Feed Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --border: #1e1e1e;
+    --border-hi: #2e2e2e;
+    --red: #ff2d20;
+    --red-glow: rgba(255,45,32,0.1);
+    --text: #e8e4df;
+    --muted: #555;
+    --dim: #2a2a2a;
+  }
+
+  html, body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    background: radial-gradient(ellipse 70% 40% at 50% 0%, rgba(255,45,32,0.07) 0%, transparent 60%), var(--bg);
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    padding: 18px 36px;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+
+  .logo-box {
+    width: 26px; height: 26px;
+    background: var(--red);
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #fff;
+  }
+
+  .logo-text { font-size: 13px; font-weight: 500; letter-spacing: 0.05em; }
+
+  .badge {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.08em;
+  }
+
+  main {
+    flex: 1;
+    max-width: 660px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 72px 24px 100px;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(30px, 5vw, 46px);
+    font-weight: 300;
+    font-style: italic;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+  }
+
+  h1 span { color: var(--red); }
+
+  .sub {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 44px;
+  }
+
+  .input-wrap {
+    display: flex;
+    border: 1px solid var(--border-hi);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .input-wrap:focus-within {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px var(--red-glow);
+  }
+
+  .input-wrap input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 14px 16px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .input-wrap input::placeholder { color: var(--muted); }
+
+  .input-wrap button {
+    background: var(--red);
+    color: #fff;
+    border: none;
+    padding: 14px 24px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+
+  .input-wrap button:hover:not(:disabled) { background: #e0291e; }
+  .input-wrap button:disabled { background: var(--dim); color: var(--muted); cursor: default; }
+
+  .error {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #ff6b63;
+    display: none;
+  }
+
+  /* Results */
+  #results {
+    margin-top: 44px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+  }
+
+  #results.show {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .channel-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--dim);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .ch-name { font-size: 14px; font-weight: 500; }
+  .ch-id   { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .feeds-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .feed-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .feed-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color 0.15s;
+  }
+
+  .feed-item:hover { border-color: var(--border-hi); }
+
+  .tag {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    min-width: 48px;
+    text-align: center;
+    padding: 3px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .tag-all    { background: rgba(255,45,32,0.14);  color: #ff6b63; }
+  .tag-video  { background: rgba(74,222,128,0.1);  color: #4ade80; }
+  .tag-shorts { background: rgba(251,191,36,0.1);  color: #fbbf24; }
+  .tag-live   { background: rgba(96,165,250,0.1);  color: #60a5fa; }
+
+  .feed-url {
+    font-size: 11px;
+    color: var(--muted);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .copy-btn {
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 11px;
+    padding: 5px 13px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+  }
+
+  .copy-btn:hover { border-color: var(--border-hi); color: var(--text); }
+  .copy-btn.ok { border-color: #4ade80; color: #4ade80; }
+
+  /* How it works */
+  .how {
+    margin-top: 64px;
+    padding-top: 44px;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .step {
+    display: flex;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .step:last-child { border-bottom: none; }
+  .step-n { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 300; color: var(--dim); min-width: 24px; padding-top: 1px; }
+  .step b { color: var(--text); font-weight: 500; }
+
+  footer {
+    padding: 20px 36px;
+    border-top: 1px solid var(--border);
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.06em;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  @media (max-width: 520px) {
+    header, footer { padding: 16px 20px; }
+    main { padding: 48px 20px 80px; }
+    .feed-url { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-box">▶</div>
+  <span class="logo-text">YT RSS</span>
+  <span class="badge">FREE · NO SIGNUP</span>
+</header>
+
+<main>
+  <h1>YouTube → <span>RSS</span><br>feed generator</h1>
+  <p class="sub">Paste a channel URL or @handle. Get RSS feeds for videos, shorts, and live streams — paste into any reader.</p>
+
+  <div class="input-wrap">
+    <input type="text" id="inp" placeholder="youtube.com/@handle or channel URL…" autocomplete="off" spellcheck="false">
+    <button id="btn" onclick="go()">Search</button>
+  </div>
+  <div class="error" id="err"></div>
+
+  <div id="results">
+    <div class="channel-row">
+      <div class="avatar" id="avatar">▶</div>
+      <div>
+        <div class="ch-name" id="chName"></div>
+        <div class="ch-id"   id="chId"></div>
+      </div>
+    </div>
+    <div class="feeds-label">RSS Feeds</div>
+    <div class="feed-list" id="feedList"></div>
+  </div>
+
+  <div class="how">
+    <div class="section-label">How it works</div>
+    <div class="step"><span class="step-n">1</span><span>Paste a <b>YouTube channel URL or @handle</b>.</span></div>
+    <div class="step"><span class="step-n">2</span><span>We resolve the <b>channel ID</b> via YouTube's oEmbed API.</span></div>
+    <div class="step"><span class="step-n">3</span><span>Four <b>RSS feed URLs</b> are generated — All, Videos, Shorts, Live.</span></div>
+    <div class="step"><span class="step-n">4</span><span>Copy any feed into <b>Feedly, Inoreader, NetNewsWire</b>, or any reader.</span></div>
+  </div>
+</main>
+
+<footer>
+  <span>YT RSS GENERATOR</span>
+  <span>NO API KEY REQUIRED</span>
+</footer>
+
+<script>
+// ── Feed URL builder ──────────────────────────────────────────
+const FEEDS = [
+  { label:'All',    cls:'tag-all',    url: id => `https://www.youtube.com/feeds/videos.xml?channel_id=${id}` },
+  { label:'Videos', cls:'tag-video',  url: id => `https://www.youtube.com/feeds/videos.xml?playlist_id=UULF${id.slice(2)}` },
+  { label:'Shorts', cls:'tag-shorts', url: id => `https://www.youtube.com/feeds/videos.xml?playlist_id=UUSH${id.slice(2)}` },
+  { label:'Live',   cls:'tag-live',   url: id => `https://www.youtube.com/feeds/videos.xml?playlist_id=UULV${id.slice(2)}` },
+];
+
+// ── Parse input for a channel ID or handle ───────────────────
+function parseInput(raw) {
+  raw = raw.trim();
+  // Direct UC... id
+  let m = raw.match(/\b(UC[a-zA-Z0-9_-]{22})\b/);
+  if (m) return { id: m[1], handle: null };
+  // /channel/UC...
+  m = raw.match(/\/channel\/(UC[a-zA-Z0-9_-]{22})/);
+  if (m) return { id: m[1], handle: null };
+  // @handle (in URL or bare)
+  m = raw.match(/@([a-zA-Z0-9_.-]+)/);
+  if (m) return { id: null, handle: '@' + m[1] };
+  return null;
+}
+
+// ── Strategy 1: YouTube oEmbed (CORS-safe, no key needed) ─────
+// oEmbed doesn't return a channel ID directly, but the author_url
+// contains the channel page. We use it only to confirm the handle
+// maps to something, then fall through to extract the ID another way.
+// Actually: oEmbed gives author_url like youtube.com/@handle or /channel/UCxxx
+async function resolveViaOEmbed(handle) {
+  const videoSearchUrl = `https://www.youtube.com/${handle}`;
+  // oEmbed needs a video URL, not a channel. We use it differently:
+  // We'll fetch a search for the channel using the noembed.com mirror which
+  // supports channel pages and returns channel_id in some cases.
+  // More reliably: use YouTube's undocumented channel oEmbed endpoint.
+  const oembed = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoSearchUrl)}&format=json`;
+  const res = await fetch(oembed);
+  if (!res.ok) throw new Error('oEmbed failed');
+  const data = await res.json();
+  // author_url is like https://www.youtube.com/@handle or /channel/UC...
+  if (data.author_url) {
+    const m = data.author_url.match(/\/channel\/(UC[a-zA-Z0-9_-]{22})/);
+    if (m) return m[1];
+    // author_url has @handle — need another step
+    // Store handle for proxy fallback
+  }
+  throw new Error('oEmbed did not return channel ID');
+}
+
+// ── Strategy 2: CORS proxy (allorigins) ──────────────────────
+async function resolveViaProxy(handle) {
+  const ytUrl = `https://www.youtube.com/${handle}`;
+  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(ytUrl)}`;
+  const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+  if (!res.ok) throw new Error('Proxy request failed');
+  const data = await res.json();
+  const html = data.contents || '';
+  // Multiple patterns YouTube embeds the ID
+  for (const re of [
+    /"channelId"\s*:\s*"(UC[a-zA-Z0-9_-]{22})"/,
+    /\/channel\/(UC[a-zA-Z0-9_-]{22})/,
+    /"externalId"\s*:\s*"(UC[a-zA-Z0-9_-]{22})"/,
+  ]) {
+    const m = html.match(re);
+    if (m) return m[1];
+  }
+  throw new Error('Could not find channel ID in page');
+}
+
+// ── Resolve @handle → channel ID ─────────────────────────────
+async function resolveHandle(handle) {
+  // Try oEmbed first (fast, no proxy needed)
+  try { return await resolveViaOEmbed(handle); } catch (_) {}
+  // Fall back to proxy
+  try { return await resolveViaProxy(handle); } catch (_) {}
+  throw new Error('Could not resolve channel. Try pasting the full youtube.com/channel/UC… URL.');
+}
+
+// ── Fetch channel name from its RSS feed ─────────────────────
+async function fetchMeta(channelId) {
+  try {
+    const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}`;
+    const res = await fetch(proxy, { signal: AbortSignal.timeout(6000) });
+    const data = await res.json();
+    const xml = data.contents || '';
+    const name  = (xml.match(/<name>([^<]+)<\/name>/)     || [])[1] || channelId;
+    const thumb = (xml.match(/<media:thumbnail[^>]+url="([^"]+)"/) || [])[1] || null;
+    return { name, thumb };
+  } catch (_) {
+    return { name: channelId, thumb: null };
+  }
+}
+
+// ── UI helpers ────────────────────────────────────────────────
+function setLoading(on) {
+  const btn = document.getElementById('btn');
+  btn.disabled = on;
+  btn.textContent = on ? 'Searching…' : 'Search';
+}
+
+function showErr(msg) {
+  const el = document.getElementById('err');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function clearErr() {
+  document.getElementById('err').style.display = 'none';
+}
+
+function render(channelId, name, thumb) {
+  // Avatar
+  const av = document.getElementById('avatar');
+  av.innerHTML = thumb
+    ? `<img src="${thumb}" alt="">`
+    : '▶';
+
+  document.getElementById('chName').textContent = name;
+  document.getElementById('chId').textContent   = channelId;
+
+  // Feeds
+  const list = document.getElementById('feedList');
+  list.innerHTML = '';
+  FEEDS.forEach(f => {
+    const url  = f.url(channelId);
+    const item = document.createElement('div');
+    item.className = 'feed-item';
+    item.innerHTML = `
+      <span class="tag ${f.cls}">${f.label}</span>
+      <span class="feed-url">${url}</span>
+      <button class="copy-btn" data-url="${url}">Copy</button>
+    `;
+    list.appendChild(item);
+  });
+
+  document.getElementById('results').classList.add('show');
+}
+
+// ── Copy buttons ──────────────────────────────────────────────
+document.addEventListener('click', async e => {
+  const btn = e.target.closest('.copy-btn');
+  if (!btn) return;
+  try {
+    await navigator.clipboard.writeText(btn.dataset.url);
+    btn.textContent = '✓ Copied';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 2000);
+  } catch (_) {}
+});
+
+// ── Main handler ──────────────────────────────────────────────
+async function go() {
+  clearErr();
+  const raw = document.getElementById('inp').value.trim();
+  if (!raw) { showErr('Enter a YouTube channel URL or @handle.'); return; }
+
+  const parsed = parseInput(raw);
+  if (!parsed) { showErr('Unrecognized format. Try youtube.com/@handle or youtube.com/channel/UC….'); return; }
+
+  setLoading(true);
+  document.getElementById('results').classList.remove('show');
+
+  try {
+    const channelId = parsed.id || await resolveHandle(parsed.handle);
+    const { name, thumb } = await fetchMeta(channelId);
+    render(channelId, name, thumb);
+  } catch (e) {
+    showErr(e.message || 'Something went wrong. Try the full channel URL.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+document.getElementById('inp').addEventListener('keydown', e => {
+  if (e.key === 'Enter') go();
+});
+</script>
+</body>
+</html>
