@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Image → Base64</title>
+<title>Image ⇄ Base64</title>
 <style>
   :root {
     --bg: #0e1116;
@@ -129,7 +129,147 @@
     font-family: var(--mono);
   }
 
-  /* --- Result area --- */
+  /* --- Mode switch --- */
+  .mode-switch {
+    display: flex;
+    gap: 8px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 28px;
+  }
+
+  .mode-btn {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--ink-dim);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .mode-btn.active {
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* --- Decode panel --- */
+  .decode-input-box {
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius);
+    background: #0b0e13;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .decode-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--panel-border);
+    background: #0f1318;
+    flex-wrap: wrap;
+  }
+
+  .mime-select {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--panel);
+    color: var(--ink);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+
+  .mime-hint {
+    font-size: 11px;
+    color: var(--ink-dim);
+    font-family: var(--mono);
+  }
+
+  #decodeInput {
+    width: 100%;
+    min-height: 160px;
+    max-height: 320px;
+    resize: vertical;
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 16px;
+    word-break: break-all;
+    outline: none;
+  }
+
+  #decodeInput::placeholder {
+    color: var(--ink-dim);
+  }
+
+  .decode-status {
+    font-family: var(--mono);
+    font-size: 12px;
+    margin-bottom: 16px;
+    min-height: 18px;
+  }
+
+  .decode-status.error { color: #f0a868; }
+  .decode-status.ok { color: var(--accent); }
+
+  .decode-result {
+    text-align: center;
+    padding: 24px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius);
+    display: none;
+  }
+
+  .decode-result.show { display: block; }
+
+  .decode-result img {
+    max-width: 100%;
+    max-height: 280px;
+  }
+
+  .decode-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .download-link {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
+    border-radius: 6px;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .download-link:hover { background: #3a715d; }
+
+
   .result {
     margin-top: 28px;
     display: none;
@@ -203,6 +343,120 @@
   .clear-btn:hover {
     color: var(--ink);
     border-color: var(--ink-dim);
+  }
+
+  /* --- Resize panel --- */
+  .resize-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .resize-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .resize-row + .resize-row {
+    margin-top: 12px;
+  }
+
+  .resize-row label {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .resize-row input[type="number"] {
+    width: 90px;
+    background: #0b0e13;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 6px 8px;
+    outline: none;
+  }
+
+  .resize-row input[type="number"]:focus {
+    border-color: var(--accent);
+  }
+
+  .lock-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-dim);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .lock-toggle input { accent-color: var(--accent); cursor: pointer; }
+
+  .scale-btn, .reset-size-btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: #0b0e13;
+    color: var(--ink-dim);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .scale-btn:hover, .reset-size-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .format-select {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: #0b0e13;
+    color: var(--ink);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    cursor: pointer;
+  }
+
+  .resize-row input[type="range"] {
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .resize-note {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-dim);
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+
+  /* --- Dimension fields (W x H) --- */
+  .dim-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dim-label,
+  .dim-unit,
+  .dim-x {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-dim);
   }
 
   /* --- Tabs --- */
@@ -340,10 +594,16 @@
 <div class="wrap">
   <header>
     <div class="eyebrow">// local · private · no upload</div>
-    <h1>Image <span>&rarr;</span> Base64</h1>
-    <p class="sub">Drop an image to encode it as a Base64 data URI. Everything happens in your browser — nothing is sent anywhere.</p>
+    <h1>Image <span>&hArr;</span> Base64</h1>
+    <p class="sub">Convert images to Base64 data URIs, or paste a Base64 string to preview and download the image. Everything happens in your browser — nothing is sent anywhere.</p>
   </header>
 
+  <div class="mode-switch">
+    <button class="mode-btn active" data-mode="encode">Image &rarr; Base64</button>
+    <button class="mode-btn" data-mode="decode">Base64 &rarr; Image</button>
+  </div>
+
+  <div class="panel active" id="encodePanel">
   <label class="dropzone" id="dropzone">
     <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -363,6 +623,43 @@
         <div class="preview-stats" id="fileStats">—</div>
       </div>
       <button class="clear-btn" id="clearBtn">Clear</button>
+    </div>
+
+    <div class="resize-panel" id="resizePanel">
+      <div class="resize-row">
+        <div class="dim-field">
+          <span class="dim-label">W</span>
+          <input type="number" id="widthInput" min="1">
+        </div>
+        <span class="dim-x">&times;</span>
+        <div class="dim-field">
+          <span class="dim-label">H</span>
+          <input type="number" id="heightInput" min="1">
+        </div>
+        <span class="dim-unit">px</span>
+        <label class="lock-toggle"><input type="checkbox" id="lockAspect" checked> Lock ratio</label>
+      </div>
+      <div class="resize-row">
+        <button class="scale-btn" data-scale="0.25">25%</button>
+        <button class="scale-btn" data-scale="0.5">50%</button>
+        <button class="scale-btn" data-scale="1">100%</button>
+        <button class="scale-btn" data-scale="2">200%</button>
+        <button class="reset-size-btn" id="resetSizeBtn">Reset to original</button>
+      </div>
+      <div class="resize-row">
+        <label>Output format
+          <select class="format-select" id="formatSelect">
+            <option value="image/png">PNG</option>
+            <option value="image/jpeg">JPEG</option>
+            <option value="image/webp">WEBP</option>
+          </select>
+        </label>
+        <label id="qualityRow" style="display:none;">Quality
+          <input type="range" id="qualityInput" min="0.1" max="1" step="0.05" value="0.92">
+          <span id="qualityValue">92%</span>
+        </label>
+      </div>
+      <div class="resize-note" id="resizeNote"></div>
     </div>
 
     <div class="tabs">
@@ -386,6 +683,33 @@
       <img id="renderCheck" alt="decoded preview">
     </div>
   </div>
+  </div>
+
+  <div class="panel" id="decodePanel">
+    <div class="decode-input-box">
+      <div class="decode-toolbar">
+        <span class="mime-hint">Image type (used only if your input has no "data:" prefix)</span>
+        <select class="mime-select" id="mimeSelect">
+          <option value="image/png">PNG</option>
+          <option value="image/jpeg">JPEG</option>
+          <option value="image/gif">GIF</option>
+          <option value="image/webp">WEBP</option>
+          <option value="image/svg+xml">SVG</option>
+        </select>
+      </div>
+      <textarea id="decodeInput" placeholder="Paste a Base64 string here — either a full data URI (data:image/png;base64,...) or just the raw Base64 characters."></textarea>
+    </div>
+
+    <div class="decode-status" id="decodeStatus"></div>
+
+    <div class="decode-result" id="decodeResult">
+      <img id="decodedImage" alt="decoded image">
+      <div class="decode-actions">
+        <a class="download-link" id="downloadLink" download="image">Download image</a>
+        <button class="clear-btn" id="clearDecodeBtn">Clear</button>
+      </div>
+    </div>
+  </div>
 
   <footer id="hint">Output updates instantly — nothing leaves your device.</footer>
 </div>
@@ -404,11 +728,31 @@
   const copyBtn = document.getElementById('copyBtn');
   const clearBtn = document.getElementById('clearBtn');
   const tabs = document.querySelectorAll('.tab');
+  const widthInput = document.getElementById('widthInput');
+  const heightInput = document.getElementById('heightInput');
+  const lockAspect = document.getElementById('lockAspect');
+  const scaleBtns = document.querySelectorAll('.scale-btn');
+  const resetSizeBtn = document.getElementById('resetSizeBtn');
+  const formatSelect = document.getElementById('formatSelect');
+  const qualityRow = document.getElementById('qualityRow');
+  const qualityInput = document.getElementById('qualityInput');
+  const qualityValue = document.getElementById('qualityValue');
+  const resizeNote = document.getElementById('resizeNote');
 
   let currentDataUrl = '';
   let currentRaw = '';
   let currentMime = '';
   let activeTab = 'uri';
+
+  let sourceImage = null;
+  let naturalWidth = 0;
+  let naturalHeight = 0;
+  let aspectRatio = 1;
+  let originalFileSize = 0;
+  let originalMime = '';
+  let originalFileName = '';
+
+  const CANVAS_MIMES = ['image/png', 'image/jpeg', 'image/webp'];
 
   function formatBytes(bytes) {
     if (bytes < 1024) return bytes + ' B';
@@ -421,26 +765,143 @@
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      currentDataUrl = e.target.result;
-      currentMime = file.type;
-      currentRaw = currentDataUrl.split(',')[1] || '';
+      const dataUrl = e.target.result;
+      const img = new Image();
+      img.onload = () => {
+        sourceImage = img;
+        naturalWidth = img.naturalWidth || 1;
+        naturalHeight = img.naturalHeight || 1;
+        aspectRatio = naturalWidth / naturalHeight;
+        originalFileSize = file.size;
+        originalMime = file.type;
+        originalFileName = file.name;
 
-      previewThumb.src = currentDataUrl;
-      renderCheck.querySelector ? null : null;
-      renderCheck.src = currentDataUrl;
-      fileName.textContent = file.name;
+        fileName.textContent = file.name;
+        widthInput.value = naturalWidth;
+        heightInput.value = naturalHeight;
 
-      const originalSize = file.size;
-      const encodedSize = currentRaw.length;
-      const growth = (((encodedSize - originalSize) / originalSize) * 100).toFixed(1);
+        formatSelect.value = CANVAS_MIMES.includes(originalMime) ? originalMime : 'image/png';
+        toggleQualityRow();
 
-      fileStats.innerHTML = `${formatBytes(originalSize)} → ${formatBytes(encodedSize)} encoded · <span class="grow">+${growth}%</span> · ${currentMime}`;
-
-      result.classList.add('show');
-      renderOutput();
+        result.classList.add('show');
+        applyResize();
+      };
+      img.onerror = () => {
+        // Fallback: still show the original encoding even if it can't be drawn to canvas
+        currentDataUrl = dataUrl;
+        currentMime = file.type;
+        currentRaw = currentDataUrl.split(',')[1] || '';
+        previewThumb.src = currentDataUrl;
+        renderCheck.src = currentDataUrl;
+        fileName.textContent = file.name;
+        fileStats.innerHTML = `${formatBytes(file.size)} · ${currentMime} · resizing unavailable for this file`;
+        result.classList.add('show');
+        renderOutput();
+      };
+      img.src = dataUrl;
     };
     reader.readAsDataURL(file);
   }
+
+  function toggleQualityRow() {
+    const fmt = formatSelect.value;
+    if (fmt === 'image/jpeg' || fmt === 'image/webp') {
+      qualityRow.style.display = 'flex';
+    } else {
+      qualityRow.style.display = 'none';
+    }
+  }
+
+  function applyResize() {
+    if (!sourceImage) return;
+
+    let w = parseInt(widthInput.value, 10);
+    let h = parseInt(heightInput.value, 10);
+    if (!w || w < 1) w = naturalWidth;
+    if (!h || h < 1) h = naturalHeight;
+    w = Math.round(w);
+    h = Math.round(h);
+    widthInput.value = w;
+    heightInput.value = h;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(sourceImage, 0, 0, w, h);
+
+    const mime = formatSelect.value;
+    const quality = parseFloat(qualityInput.value);
+    currentDataUrl = (mime === 'image/jpeg' || mime === 'image/webp')
+      ? canvas.toDataURL(mime, quality)
+      : canvas.toDataURL(mime);
+    currentMime = mime;
+    currentRaw = currentDataUrl.split(',')[1] || '';
+
+    previewThumb.src = currentDataUrl;
+    renderCheck.src = currentDataUrl;
+
+    const encodedSize = currentRaw.length;
+    const resized = (w !== naturalWidth || h !== naturalHeight);
+    const formatChanged = (mime !== originalMime);
+
+    let stats = `${w}\u00d7${h}px · ${mime} · ${formatBytes(encodedSize)} encoded`;
+    if (resized || formatChanged) {
+      stats += ` <span class="grow">(was ${naturalWidth}\u00d7${naturalHeight}px, ${formatBytes(originalFileSize)}, ${originalMime})</span>`;
+    }
+    fileStats.innerHTML = stats;
+
+    let note = '';
+    if (formatChanged && !CANVAS_MIMES.includes(originalMime)) {
+      note = `Note: ${originalMime} can't be re-encoded directly in the browser, so the output is converted to ${mime}.`;
+    } else if (formatChanged) {
+      note = `Output format changed from ${originalMime} to ${mime}.`;
+    }
+    resizeNote.textContent = note;
+
+    renderOutput();
+  }
+
+  widthInput.addEventListener('input', () => {
+    if (lockAspect.checked) {
+      heightInput.value = Math.max(1, Math.round(widthInput.value / aspectRatio));
+    }
+    applyResize();
+  });
+
+  heightInput.addEventListener('input', () => {
+    if (lockAspect.checked) {
+      widthInput.value = Math.max(1, Math.round(heightInput.value * aspectRatio));
+    }
+    applyResize();
+  });
+
+  scaleBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const scale = parseFloat(btn.dataset.scale);
+      widthInput.value = Math.max(1, Math.round(naturalWidth * scale));
+      heightInput.value = Math.max(1, Math.round(naturalHeight * scale));
+      applyResize();
+    });
+  });
+
+  resetSizeBtn.addEventListener('click', () => {
+    widthInput.value = naturalWidth;
+    heightInput.value = naturalHeight;
+    formatSelect.value = CANVAS_MIMES.includes(originalMime) ? originalMime : 'image/png';
+    toggleQualityRow();
+    applyResize();
+  });
+
+  formatSelect.addEventListener('change', () => {
+    toggleQualityRow();
+    applyResize();
+  });
+
+  qualityInput.addEventListener('input', () => {
+    qualityValue.textContent = Math.round(qualityInput.value * 100) + '%';
+    applyResize();
+  });
 
   function renderOutput() {
     cssBox.classList.remove('show');
@@ -488,6 +949,8 @@
     fileInput.value = '';
     currentDataUrl = '';
     currentRaw = '';
+    sourceImage = null;
+    resizeNote.textContent = '';
   });
 
   fileInput.addEventListener('change', (e) => {
@@ -516,6 +979,7 @@
 
   // Paste support
   window.addEventListener('paste', (e) => {
+    if (currentMode !== 'encode') return;
     const items = e.clipboardData.items;
     for (const item of items) {
       if (item.type.startsWith('image/')) {
@@ -524,6 +988,101 @@
       }
     }
   });
+
+  // --- Mode switching ---
+  const modeBtns = document.querySelectorAll('.mode-btn');
+  const encodePanel = document.getElementById('encodePanel');
+  const decodePanel = document.getElementById('decodePanel');
+  let currentMode = 'encode';
+
+  modeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      modeBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMode = btn.dataset.mode;
+      encodePanel.classList.toggle('active', currentMode === 'encode');
+      decodePanel.classList.toggle('active', currentMode === 'decode');
+    });
+  });
+
+  // --- Decode: Base64 -> Image ---
+  const decodeInput = document.getElementById('decodeInput');
+  const decodeStatus = document.getElementById('decodeStatus');
+  const decodeResult = document.getElementById('decodeResult');
+  const decodedImage = document.getElementById('decodedImage');
+  const downloadLink = document.getElementById('downloadLink');
+  const mimeSelect = document.getElementById('mimeSelect');
+  const clearDecodeBtn = document.getElementById('clearDecodeBtn');
+
+  function extFromMime(mime) {
+    const map = {
+      'image/png': 'png',
+      'image/jpeg': 'jpg',
+      'image/gif': 'gif',
+      'image/webp': 'webp',
+      'image/svg+xml': 'svg'
+    };
+    return map[mime] || 'img';
+  }
+
+  function tryDecode() {
+    const raw = decodeInput.value.trim();
+
+    if (!raw) {
+      decodeStatus.textContent = '';
+      decodeStatus.className = 'decode-status';
+      decodeResult.classList.remove('show');
+      return;
+    }
+
+    let dataUrl;
+    let mime;
+
+    if (raw.startsWith('data:')) {
+      const match = raw.match(/^data:([^;,]+)/);
+      mime = match ? match[1] : mimeSelect.value;
+      dataUrl = raw;
+    } else {
+      // Strip any whitespace/newlines that often get pasted in
+      const cleaned = raw.replace(/\s+/g, '');
+      const b64Pattern = /^[A-Za-z0-9+/]+={0,2}$/;
+      if (!b64Pattern.test(cleaned)) {
+        decodeStatus.textContent = 'This doesn\'t look like valid Base64 — check for stray characters or a missing "data:" prefix.';
+        decodeStatus.className = 'decode-status error';
+        decodeResult.classList.remove('show');
+        return;
+      }
+      mime = mimeSelect.value;
+      dataUrl = `data:${mime};base64,${cleaned}`;
+    }
+
+    const testImg = new Image();
+    testImg.onload = () => {
+      decodedImage.src = dataUrl;
+      downloadLink.href = dataUrl;
+      downloadLink.download = `image.${extFromMime(mime)}`;
+      decodeResult.classList.add('show');
+      decodeStatus.textContent = `Decoded successfully · ${mime} · ${testImg.naturalWidth}×${testImg.naturalHeight}px`;
+      decodeStatus.className = 'decode-status ok';
+    };
+    testImg.onerror = () => {
+      decodeStatus.textContent = 'Could not render this as an image — the data may be invalid or the wrong image type may be selected.';
+      decodeStatus.className = 'decode-status error';
+      decodeResult.classList.remove('show');
+    };
+    testImg.src = dataUrl;
+  }
+
+  decodeInput.addEventListener('input', tryDecode);
+  mimeSelect.addEventListener('change', tryDecode);
+
+  clearDecodeBtn.addEventListener('click', () => {
+    decodeInput.value = '';
+    decodeStatus.textContent = '';
+    decodeStatus.className = 'decode-status';
+    decodeResult.classList.remove('show');
+  });
+
 </script>
 </body>
 </html>
