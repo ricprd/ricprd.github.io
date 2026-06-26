@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVG → PNG</title>
+<style>
+  :root{
+    --paper:#E9ECEF;
+    --surface:#FFFFFF;
+    --ink:#16191D;
+    --muted:#697079;
+    --line:#D6DBE0;
+    --line-strong:#C2C9D0;
+    --accent:#0F766E;
+    --accent-hover:#0B5E58;
+    --accent-soft:#E2F1EF;
+    --danger:#B4452F;
+    --check:#DCE1E6;
+    --radius:8px;
+    --radius-sm:6px;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  [hidden]{display:none!important;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:var(--sans);
+    color:var(--ink);
+    background:var(--paper);
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding:32px 24px 48px;
+  }
+
+  /* Header */
+  header{margin-bottom:24px;}
+  .title{
+    font-size:26px;
+    font-weight:650;
+    letter-spacing:-0.02em;
+    margin:0;
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .title .arrow{color:var(--accent);font-family:var(--mono);font-weight:500;}
+  .subtitle{margin:6px 0 0;color:var(--muted);font-size:14px;}
+
+  /* Layout */
+  .grid{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    gap:20px;
+    align-items:start;
+  }
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+  }
+  .panel-pad{padding:18px;}
+
+  /* Section labels */
+  .label{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 10px;
+  }
+  .control + .control{margin-top:22px;}
+
+  /* Dropzone */
+  .drop{
+    border:1.5px dashed var(--line-strong);
+    border-radius:var(--radius-sm);
+    padding:22px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease,background .15s ease;
+    background:#FBFCFD;
+  }
+  .drop:hover{border-color:var(--accent);}
+  .drop.over{border-color:var(--accent);background:var(--accent-soft);}
+  .drop-icon{
+    width:30px;height:30px;margin:0 auto 8px;
+    color:var(--accent);
+  }
+  .drop p{margin:0;font-size:13.5px;}
+  .drop .hint{color:var(--muted);font-size:12px;margin-top:4px;}
+  .browse{color:var(--accent);text-decoration:underline;text-underline-offset:2px;}
+  .loaded-name{
+    font-family:var(--mono);font-size:12.5px;
+    margin-top:10px;color:var(--ink);
+    word-break:break-all;
+    display:flex;align-items:center;gap:6px;justify-content:center;
+  }
+  .loaded-name .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;}
+
+  .paste-toggle{
+    background:none;border:none;padding:8px 0 0;margin:0;
+    color:var(--muted);font-size:12px;font-family:var(--sans);
+    cursor:pointer;text-decoration:underline;text-underline-offset:2px;
+  }
+  .paste-toggle:hover{color:var(--ink);}
+  textarea.code{
+    width:100%;margin-top:10px;min-height:96px;resize:vertical;
+    font-family:var(--mono);font-size:12px;
+    border:1px solid var(--line);border-radius:var(--radius-sm);
+    padding:10px;color:var(--ink);background:#FBFCFD;
+  }
+  textarea.code:focus{outline:none;border-color:var(--accent);}
+
+  /* Dimension inputs */
+  .dims{display:flex;align-items:flex-end;gap:8px;}
+  .field{flex:1;}
+  .field span{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;font-family:var(--mono);}
+  .field input{
+    width:100%;font-family:var(--mono);font-size:15px;
+    padding:9px 10px;border:1px solid var(--line);
+    border-radius:var(--radius-sm);background:#fff;color:var(--ink);
+  }
+  .field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .times{padding-bottom:9px;color:var(--muted);font-family:var(--mono);}
+
+  .lock{
+    display:flex;align-items:center;gap:7px;margin-top:10px;
+    font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none;
+    width:fit-content;
+  }
+  .lock input{accent-color:var(--accent);width:14px;height:14px;}
+
+  /* Presets + segmented */
+  .row{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{
+    font-family:var(--mono);font-size:12.5px;
+    padding:7px 0;flex:1;min-width:52px;text-align:center;
+    border:1px solid var(--line);border-radius:var(--radius-sm);
+    background:#fff;color:var(--ink);cursor:pointer;transition:all .12s ease;
+  }
+  .chip:hover{border-color:var(--line-strong);}
+  .chip:disabled{opacity:.4;cursor:not-allowed;}
+  .seg{display:flex;gap:6px;}
+  .seg button{
+    flex:1;font-size:12.5px;padding:8px 4px;
+    border:1px solid var(--line);border-radius:var(--radius-sm);
+    background:#fff;color:var(--ink);cursor:pointer;transition:all .12s ease;
+    font-family:var(--sans);
+  }
+  .seg button:hover{border-color:var(--line-strong);}
+  .seg button.active{
+    background:var(--accent);border-color:var(--accent);color:#fff;
+  }
+  .swatch-wrap{display:flex;align-items:center;gap:8px;margin-top:8px;}
+  .swatch-wrap input[type=color]{
+    width:32px;height:28px;padding:0;border:1px solid var(--line);
+    border-radius:5px;background:#fff;cursor:pointer;
+  }
+  .swatch-wrap label{font-size:12px;color:var(--muted);}
+
+  /* Export button */
+  .export{
+    width:100%;margin-top:22px;
+    font-size:14.5px;font-weight:600;font-family:var(--sans);
+    padding:13px;border:none;border-radius:var(--radius-sm);
+    background:var(--accent);color:#fff;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:background .15s ease;
+  }
+  .export:hover:not(:disabled){background:var(--accent-hover);}
+  .export:disabled{background:var(--line-strong);cursor:not-allowed;}
+  .export svg{width:16px;height:16px;}
+
+  /* Preview */
+  .preview{min-height:440px;display:flex;flex-direction:column;}
+  .preview-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 16px;border-bottom:1px solid var(--line);
+  }
+  .preview-head .label{margin:0;}
+  .readout{font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .readout b{color:var(--ink);font-weight:600;}
+  .stage{
+    flex:1;display:flex;align-items:center;justify-content:center;
+    padding:24px;min-height:380px;overflow:hidden;
+  }
+  .checker{
+    background-color:#fff;
+    background-image:
+      linear-gradient(45deg,var(--check) 25%,transparent 25%),
+      linear-gradient(-45deg,var(--check) 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,var(--check) 75%),
+      linear-gradient(-45deg,transparent 75%,var(--check) 75%);
+    background-size:18px 18px;
+    background-position:0 0,0 9px,9px -9px,-9px 0;
+    border-radius:4px;
+    box-shadow:0 1px 3px rgba(0,0,0,.08),0 0 0 1px var(--line);
+    line-height:0;
+  }
+  #preview-canvas{
+    display:block;max-width:100%;max-height:330px;
+    width:auto;height:auto;
+  }
+  .empty{
+    color:var(--muted);text-align:center;font-size:14px;max-width:240px;
+  }
+  .empty svg{width:34px;height:34px;color:var(--line-strong);margin-bottom:12px;}
+  .err{
+    color:var(--danger);font-size:13px;text-align:center;
+    font-family:var(--mono);max-width:300px;line-height:1.4;
+  }
+
+  .footnote{margin-top:18px;color:var(--muted);font-size:12px;text-align:center;}
+  .footnote code{font-family:var(--mono);background:#fff;border:1px solid var(--line);padding:1px 5px;border-radius:4px;}
+
+  @media (max-width:760px){
+    .grid{grid-template-columns:1fr;}
+    .wrap{padding:24px 16px 40px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="title">SVG <span class="arrow">→</span> PNG</h1>
+    <p class="subtitle">Load a vector, set the pixel size, export a raster copy. Everything runs locally in your browser.</p>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT: controls -->
+    <div class="panel panel-pad">
+      <div class="control">
+        <p class="label">Source</p>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop an SVG file">
+          <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>
+          </svg>
+          <p>Drop an SVG here or <span class="browse">browse</span></p>
+          <p class="hint">.svg files only</p>
+          <div class="loaded-name" id="loaded" hidden><span class="dot"></span><span id="loaded-text"></span></div>
+        </div>
+        <input type="file" id="file" accept=".svg,image/svg+xml" hidden>
+        <button class="paste-toggle" id="paste-toggle">or paste SVG markup</button>
+        <textarea class="code" id="code" placeholder="<svg ...>…</svg>" hidden></textarea>
+      </div>
+
+      <div class="control">
+        <p class="label">Output size</p>
+        <div class="dims">
+          <label class="field"><span>Width</span><input type="number" id="w" min="1" max="16384" disabled></label>
+          <span class="times">×</span>
+          <label class="field"><span>Height</span><input type="number" id="h" min="1" max="16384" disabled></label>
+        </div>
+        <label class="lock"><input type="checkbox" id="lock" checked disabled>Lock aspect ratio</label>
+        <div class="row" style="margin-top:12px;">
+          <button class="chip" data-scale="0.5" disabled>½×</button>
+          <button class="chip" data-scale="1" disabled>1×</button>
+          <button class="chip" data-scale="2" disabled>2×</button>
+          <button class="chip" data-scale="4" disabled>4×</button>
+        </div>
+      </div>
+
+      <div class="control">
+        <p class="label">Background</p>
+        <div class="seg" id="bg">
+          <button data-bg="transparent" class="active">Transparent</button>
+          <button data-bg="white">White</button>
+          <button data-bg="custom">Custom</button>
+        </div>
+        <div class="swatch-wrap" id="swatch" hidden>
+          <input type="color" id="bgcolor" value="#1e88e5">
+          <label for="bgcolor">Fill color</label>
+        </div>
+      </div>
+
+      <button class="export" id="export" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 4v12M12 16l-4-4M12 16l4-4"/><path d="M4 20h16"/>
+        </svg>
+        Export PNG
+      </button>
+    </div>
+
+    <!-- RIGHT: preview -->
+    <div class="panel preview">
+      <div class="preview-head">
+        <p class="label">Preview</p>
+        <div class="readout" id="readout">—</div>
+      </div>
+      <div class="stage" id="stage">
+        <div class="empty" id="empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/><circle cx="8.5" cy="8.5" r="1.5"/>
+          </svg>
+          <div>No image yet. Load an SVG to see the rendered result on a transparency grid.</div>
+        </div>
+        <div class="checker" id="checker" hidden>
+          <canvas id="preview-canvas"></canvas>
+        </div>
+        <div class="err" id="err" hidden></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="footnote">Tip: PNG keeps transparency. Use <code>Transparent</code> for icons/logos, or pick a fill for photos &amp; social images.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = s => document.querySelector(s);
+
+  const drop = $("#drop"), fileInput = $("#file"), loaded = $("#loaded"), loadedText = $("#loaded-text");
+  const pasteToggle = $("#paste-toggle"), codeArea = $("#code");
+  const wIn = $("#w"), hIn = $("#h"), lock = $("#lock");
+  const chips = document.querySelectorAll(".chip");
+  const bgSeg = $("#bg"), swatch = $("#swatch"), bgColor = $("#bgcolor");
+  const exportBtn = $("#export");
+  const stage = $("#stage"), emptyState = $("#empty"), checker = $("#checker"), errBox = $("#err");
+  const canvas = $("#preview-canvas"), readout = $("#readout");
+
+  let svgText = "";            // current source markup
+  let baseW = 0, baseH = 0;    // intrinsic size of the SVG
+  let ratio = 1;               // baseW / baseH
+  let bgMode = "transparent";
+  let fileName = "image";
+  let currentBlob = null;
+  let renderTimer = null;
+
+  // ---- Parse intrinsic dimensions from SVG markup ----
+  function parseLen(v){
+    if(!v) return NaN;
+    const m = String(v).trim().match(/^([\d.]+)\s*(px)?$/i);
+    return m ? parseFloat(m[1]) : NaN;
+  }
+  function getIntrinsic(markup){
+    const doc = new DOMParser().parseFromString(markup, "image/svg+xml");
+    const svg = doc.documentElement;
+    if(!svg || svg.nodeName.toLowerCase() !== "svg" || doc.querySelector("parsererror")){
+      return null;
+    }
+    let w = parseLen(svg.getAttribute("width"));
+    let h = parseLen(svg.getAttribute("height"));
+    const vb = svg.getAttribute("viewBox");
+    if((isNaN(w) || isNaN(h)) && vb){
+      const p = vb.split(/[\s,]+/).map(Number);
+      if(p.length === 4 && p[2] > 0 && p[3] > 0){ w = w || p[2]; h = h || p[3]; }
+    }
+    if(isNaN(w) || isNaN(h) || w <= 0 || h <= 0){ w = 512; h = 512; }
+    return { w: Math.round(w), h: Math.round(h) };
+  }
+
+  // ---- Build a sized SVG blob for crisp rasterization ----
+  function sizedSvgURL(targetW, targetH){
+    const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+    const svg = doc.documentElement;
+    if(!svg.getAttribute("xmlns")) svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    if(!svg.getAttribute("viewBox")){
+      svg.setAttribute("viewBox", "0 0 " + baseW + " " + baseH);
+    }
+    svg.setAttribute("width", targetW);
+    svg.setAttribute("height", targetH);
+    const out = new XMLSerializer().serializeToString(svg);
+    return URL.createObjectURL(new Blob([out], { type: "image/svg+xml;charset=utf-8" }));
+  }
+
+  // ---- Render to canvas, update preview + export blob ----
+  function render(){
+    if(!svgText) return;
+    const tw = clampDim(parseInt(wIn.value, 10));
+    const th = clampDim(parseInt(hIn.value, 10));
+    if(!tw || !th) return;
+
+    const url = sizedSvgURL(tw, th);
+    const img = new Image();
+    img.onload = function(){
+      canvas.width = tw; canvas.height = th;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, tw, th);
+      if(bgMode === "white"){ ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, tw, th); }
+      else if(bgMode === "custom"){ ctx.fillStyle = bgColor.value; ctx.fillRect(0, 0, tw, th); }
+      ctx.drawImage(img, 0, 0, tw, th);
+      URL.revokeObjectURL(url);
+
+      try{
+        canvas.toBlob(function(blob){
+          currentBlob = blob;
+          showCanvas();
+          readout.innerHTML = "<b>" + tw + " × " + th + "</b> px · " + fmtSize(blob ? blob.size : 0);
+          exportBtn.disabled = !blob;
+        }, "image/png");
+      }catch(e){
+        showError("Can't export: this SVG pulls in cross-origin content, which taints the canvas.");
+      }
+    };
+    img.onerror = function(){
+      URL.revokeObjectURL(url);
+      showError("Couldn't render this SVG. Check that the markup is valid.");
+    };
+    img.src = url;
+  }
+
+  function scheduleRender(){
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(render, 120);
+  }
+
+  // ---- UI state helpers ----
+  function showCanvas(){ emptyState.hidden = true; errBox.hidden = true; checker.hidden = false; }
+  function showError(msg){ checker.hidden = true; emptyState.hidden = true; errBox.hidden = false; errBox.textContent = msg; exportBtn.disabled = true; readout.textContent = "—"; }
+  function clampDim(n){ if(isNaN(n)) return 0; return Math.max(1, Math.min(16384, Math.round(n))); }
+  function fmtSize(b){ if(!b) return "0 B"; if(b < 1024) return b + " B"; if(b < 1048576) return (b/1024).toFixed(1) + " KB"; return (b/1048576).toFixed(2) + " MB"; }
+
+  function enableControls(){
+    [wIn, hIn, lock, exportBtn].forEach(el => el.disabled = false);
+    chips.forEach(c => c.disabled = false);
+  }
+
+  // ---- Load a new source ----
+  function loadSVG(markup, name){
+    const size = getIntrinsic(markup);
+    if(!size){ showError("That doesn't look like a valid SVG."); return; }
+    svgText = markup;
+    baseW = size.w; baseH = size.h; ratio = baseW / baseH;
+    fileName = (name || "image").replace(/\.svg$/i, "");
+    wIn.value = baseW; hIn.value = baseH;
+    enableControls();
+    if(name){
+      loaded.hidden = false; loadedText.textContent = name;
+    }
+    render();
+  }
+
+  function readFile(file){
+    if(!file) return;
+    if(!/svg/i.test(file.type) && !/\.svg$/i.test(file.name)){
+      showError("Please choose an .svg file."); return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => loadSVG(e.target.result, file.name);
+    reader.readAsText(file);
+  }
+
+  // ---- Wire up events ----
+  drop.addEventListener("click", () => fileInput.click());
+  drop.addEventListener("keydown", e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); fileInput.click(); } });
+  fileInput.addEventListener("change", e => readFile(e.target.files[0]));
+
+  ["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => { if(e.dataTransfer.files.length) readFile(e.dataTransfer.files[0]); });
+
+  pasteToggle.addEventListener("click", () => {
+    const open = codeArea.hidden;
+    codeArea.hidden = !open;
+    pasteToggle.textContent = open ? "hide markup box" : "or paste SVG markup";
+    if(open) codeArea.focus();
+  });
+  codeArea.addEventListener("input", () => {
+    const v = codeArea.value.trim();
+    if(v.indexOf("<svg") !== -1){ loaded.hidden = true; loadSVG(v, null); fileName = "image"; }
+  });
+
+  // Dimension inputs with aspect-ratio lock
+  wIn.addEventListener("input", () => {
+    if(lock.checked && ratio){ hIn.value = Math.max(1, Math.round(parseInt(wIn.value,10) / ratio)) || ""; }
+    scheduleRender();
+  });
+  hIn.addEventListener("input", () => {
+    if(lock.checked && ratio){ wIn.value = Math.max(1, Math.round(parseInt(hIn.value,10) * ratio)) || ""; }
+    scheduleRender();
+  });
+  lock.addEventListener("change", () => { if(lock.checked && wIn.value){ hIn.value = Math.max(1, Math.round(parseInt(wIn.value,10)/ratio)); scheduleRender(); } });
+
+  chips.forEach(chip => chip.addEventListener("click", () => {
+    const s = parseFloat(chip.dataset.scale);
+    wIn.value = Math.max(1, Math.round(baseW * s));
+    hIn.value = Math.max(1, Math.round(baseH * s));
+    scheduleRender();
+  }));
+
+  bgSeg.addEventListener("click", e => {
+    const btn = e.target.closest("button"); if(!btn) return;
+    bgSeg.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    bgMode = btn.dataset.bg;
+    swatch.hidden = bgMode !== "custom";
+    if(svgText) scheduleRender();
+  });
+  bgColor.addEventListener("input", () => { if(bgMode === "custom" && svgText) scheduleRender(); });
+
+  exportBtn.addEventListener("click", () => {
+    if(!currentBlob) return;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(currentBlob);
+    a.download = fileName + ".png";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+})();
+</script>
+</body>
+</html>
