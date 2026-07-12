@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trim Transparent Edges</title>
+<style>
+  :root{
+    --ink:#1b1f23;
+    --paper:#faf8f5;
+    --line:#e2ddd4;
+    --accent:#3a6b5f;
+    --accent-soft:#e7efec;
+    --muted:#767268;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:48px 20px;
+  }
+  main{
+    width:100%;
+    max-width:720px;
+  }
+  h1{
+    font-size:22px;
+    font-weight:600;
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  p.sub{
+    margin:0 0 32px;
+    color:var(--muted);
+    font-size:14px;
+    line-height:1.5;
+  }
+  .dropzone{
+    display:block;
+    border:1.5px dashed var(--line);
+    border-radius:10px;
+    padding:40px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+    background:#fff;
+  }
+  .dropzone.drag{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .dropzone strong{ font-weight:600; }
+  .dropzone .hint{
+    display:block;
+    margin-top:6px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  input[type=file]{ display:none; }
+
+  .controls{
+    display:none;
+    align-items:center;
+    gap:14px;
+    margin-top:22px;
+    padding:14px 16px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#fff;
+    font-size:13px;
+  }
+  .controls.show{ display:flex; }
+  .controls label{ color:var(--muted); white-space:nowrap; }
+  .controls input[type=range]{ flex:1; accent-color:var(--accent); }
+  .controls .val{ width:34px; text-align:right; font-variant-numeric:tabular-nums; }
+
+  .results{
+    display:none;
+    margin-top:28px;
+  }
+  .results.show{ display:block; }
+
+  .panel{
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .panel h3{
+    margin:0;
+    padding:10px 14px;
+    font-size:12px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--muted);
+    border-bottom:1px solid var(--line);
+  }
+  .canvas-wrap{
+    padding:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:160px;
+    background-image:
+      linear-gradient(45deg,#eee 25%,transparent 25%),
+      linear-gradient(-45deg,#eee 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#eee 75%),
+      linear-gradient(-45deg,transparent 75%,#eee 75%);
+    background-size:16px 16px;
+    background-position:0 0,0 8px,8px -8px,-8px 0;
+    background-color:#fff;
+  }
+  canvas{ max-width:100%; max-height:340px; display:block; }
+  #croppedCanvas{ display:none; }
+  .dims{
+    padding:8px 14px 12px;
+    font-size:12px;
+    color:var(--muted);
+    border-top:1px solid var(--line);
+  }
+
+  .actions{
+    margin-top:20px;
+    display:none;
+    gap:10px;
+  }
+  .actions.show{ display:flex; }
+  button.primary{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:7px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  button.primary:hover{ opacity:.92; }
+  button.secondary{
+    background:#fff;
+    color:var(--ink);
+    border:1px solid var(--line);
+    padding:10px 18px;
+    border-radius:7px;
+    font-size:14px;
+    cursor:pointer;
+  }
+  button.secondary:hover{ background:var(--accent-soft); }
+
+  .error{
+    display:none;
+    margin-top:18px;
+    padding:12px 14px;
+    border-radius:8px;
+    background:#fbeceb;
+    color:#8a2a22;
+    font-size:13px;
+  }
+  .error.show{ display:block; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Trim transparent edges</h1>
+  <p class="sub">Upload a PNG or SVG and it'll crop in from every side until it hits the first non&#8209;transparent pixel.</p>
+
+  <label class="dropzone" id="dropzone">
+    <strong>Click to upload</strong> or drag a file here
+    <span class="hint">PNG or SVG</span>
+    <input type="file" id="fileInput" accept="image/png,image/svg+xml,.png,.svg">
+  </label>
+
+  <div class="controls" id="controls">
+    <label for="threshold">Alpha threshold</label>
+    <input type="range" id="threshold" min="0" max="254" value="0">
+    <span class="val" id="thresholdVal">0</span>
+  </div>
+
+  <div class="error" id="error"></div>
+
+  <div class="results" id="results">
+    <div class="panel">
+      <h3>Crop preview</h3>
+      <div class="canvas-wrap"><canvas id="originalCanvas"></canvas></div>
+      <div class="dims" id="originalDims">&nbsp;</div>
+    </div>
+  </div>
+  <canvas id="croppedCanvas"></canvas>
+
+  <div class="actions" id="actions">
+    <button class="primary" id="downloadBtn">Download PNG</button>
+    <button class="secondary" id="resetBtn">Start over</button>
+  </div>
+</main>
+
+<script>
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const controls = document.getElementById('controls');
+  const thresholdInput = document.getElementById('threshold');
+  const thresholdVal = document.getElementById('thresholdVal');
+  const errorBox = document.getElementById('error');
+  const results = document.getElementById('results');
+  const actions = document.getElementById('actions');
+  const originalCanvas = document.getElementById('originalCanvas');
+  const croppedCanvas = document.getElementById('croppedCanvas');
+  const originalDims = document.getElementById('originalDims');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const resetBtn = document.getElementById('resetBtn');
+
+  let sourceImage = null; // holds the loaded HTMLImageElement
+
+  function showError(msg){
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+  }
+  function clearError(){
+    errorBox.classList.remove('show');
+    errorBox.textContent = '';
+  }
+
+  dropzone.addEventListener('click', (e) => {
+    // label already opens the file picker via the input, avoid double trigger
+  });
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) loadFile(e.target.files[0]);
+  });
+  ['dragenter','dragover'].forEach(evt => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.add('drag');
+    });
+  });
+  ['dragleave','drop'].forEach(evt => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('drag');
+    });
+  });
+  dropzone.addEventListener('drop', (e) => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) loadFile(file);
+  });
+
+  thresholdInput.addEventListener('input', () => {
+    thresholdVal.textContent = thresholdInput.value;
+    if (sourceImage) process();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    sourceImage = null;
+    fileInput.value = '';
+    controls.classList.remove('show');
+    results.classList.remove('show');
+    actions.classList.remove('show');
+    clearError();
+  });
+
+  function loadFile(file){
+    clearError();
+    const validType = file.type === 'image/png' || file.type === 'image/svg+xml' ||
+                       /\.(png|svg)$/i.test(file.name);
+    if (!validType){
+      showError('Please upload a PNG or SVG file.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        if (!img.naturalWidth || !img.naturalHeight){
+          showError('Could not read this image\'s dimensions. If it\'s an SVG, make sure it has a width/height or viewBox set.');
+          return;
+        }
+        sourceImage = img;
+        controls.classList.add('show');
+        results.classList.add('show');
+        process();
+      };
+      img.onerror = () => showError('Could not load that file as an image.');
+      img.src = reader.result;
+    };
+    reader.onerror = () => showError('Could not read that file.');
+    reader.readAsDataURL(file);
+  }
+
+  function process(){
+    clearError();
+    const w = sourceImage.naturalWidth;
+    const h = sourceImage.naturalHeight;
+
+    // draw original to its canvas
+    originalCanvas.width = w;
+    originalCanvas.height = h;
+    const octx = originalCanvas.getContext('2d');
+    octx.clearRect(0,0,w,h);
+    octx.drawImage(sourceImage,0,0,w,h);
+
+    const { data } = octx.getImageData(0,0,w,h);
+    const threshold = parseInt(thresholdInput.value,10);
+
+    let minX = w, minY = h, maxX = -1, maxY = -1;
+    for (let y=0; y<h; y++){
+      const rowStart = y*w*4;
+      for (let x=0; x<w; x++){
+        const alpha = data[rowStart + x*4 + 3];
+        if (alpha > threshold){
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+
+    if (maxX < minX || maxY < minY){
+      showError('This image is fully transparent \u2014 there\'s nothing to crop to.');
+      results.classList.remove('show');
+      actions.classList.remove('show');
+      return;
+    }
+
+    const cropW = maxX - minX + 1;
+    const cropH = maxY - minY + 1;
+
+    // Build the cropped canvas from the clean source image (before any overlay is drawn)
+    croppedCanvas.width = cropW;
+    croppedCanvas.height = cropH;
+    const cctx = croppedCanvas.getContext('2d');
+    cctx.clearRect(0,0,cropW,cropH);
+    cctx.drawImage(sourceImage, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+    originalDims.textContent = w + ' \u00d7 ' + h + ' px \u2192 ' + cropW + ' \u00d7 ' + cropH + ' px after trim ' +
+      '(shaded area removed: ' + minX + 'px left, ' + (w-1-maxX) + 'px right, ' + minY + 'px top, ' + (h-1-maxY) + 'px bottom)';
+
+    // Overlay the crop boundary on the ORIGINAL preview: dim what gets trimmed,
+    // outline what survives, so it's obvious where the cut falls.
+    octx.save();
+    octx.fillStyle = 'rgba(15,17,19,0.55)';
+    if (minY > 0) octx.fillRect(0, 0, w, minY);
+    if (maxY < h - 1) octx.fillRect(0, maxY + 1, w, h - (maxY + 1));
+    if (minX > 0) octx.fillRect(0, minY, minX, cropH);
+    if (maxX < w - 1) octx.fillRect(maxX + 1, minY, w - (maxX + 1), cropH);
+    octx.restore();
+
+    octx.save();
+    octx.strokeStyle = '#5fb39c';
+    octx.lineWidth = 2;
+    octx.setLineDash([7, 5]);
+    octx.strokeRect(minX + 1, minY + 1, Math.max(cropW - 2, 0), Math.max(cropH - 2, 0));
+    octx.restore();
+
+    actions.classList.add('show');
+  }
+
+  downloadBtn.addEventListener('click', () => {
+    croppedCanvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'trimmed.png';
+      a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  });
+</script>
+</body>
+</html>
