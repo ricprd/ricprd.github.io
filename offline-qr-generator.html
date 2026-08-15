@@ -16,36 +16,20 @@
     --serif: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
   }
   *{box-sizing:border-box;}
-  html,body{height:100%;}
   body{
     margin:0;
+    min-height:100vh;
     background:var(--paper);
-    background-image:
-      linear-gradient(var(--paper-2) 1px, transparent 1px),
-      linear-gradient(90deg, var(--paper-2) 1px, transparent 1px);
-    background-size: 28px 28px;
     color:var(--ink);
     font-family:var(--mono);
-    display:flex;
-    align-items:center;
-    justify-content:center;
     padding:24px;
   }
   .sheet{
     width:100%;
     max-width:880px;
+    margin:0 auto;
     border:1.5px solid var(--ink);
     background:var(--paper);
-    position:relative;
-    box-shadow: 8px 8px 0 var(--ink);
-  }
-  .sheet::before{
-    content:"";
-    position:absolute;
-    inset:6px;
-    border:1px solid var(--ink);
-    pointer-events:none;
-    opacity:.35;
   }
   header{
     display:flex;
@@ -169,10 +153,8 @@
     border:1px solid var(--ink);
     padding:10px 16px;
     cursor:pointer;
-    transition:transform .08s ease;
   }
-  button:hover{transform:translateY(-1px);}
-  button:active{transform:translateY(0px);}
+  button:hover{opacity:.85;}
   button.ghost{
     background:transparent;
     color:var(--ink);
