@@ -264,7 +264,7 @@
       <div class="fieldset" data-type="text">
         <div class="field">
           <label for="t_text">Content</label>
-          <textarea id="t_text" placeholder="Type a URL, note, anything...">https://www.anthropic.com</textarea>
+          <textarea id="t_text" placeholder="https://ricprd.github.io/"></textarea>
         </div>
       </div>
 
@@ -2822,6 +2822,21 @@ var qrcode = function() {
     return el ? el.value.trim() : '';
   }
 
+  // qrcode-20260815-143007-k3z9qa.png — timestamp keeps saves ordered, suffix
+  // keeps two codes made in the same second from overwriting each other
+  function makeFilename(ext){
+    function pad2(n){ return (n < 10 ? '0' : '') + n; }
+    const d = new Date();
+    const stamp = d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + '-' +
+                  pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds());
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let rand = '';
+    for(let i = 0; i < 6; i++){
+      rand += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return 'qrcode-' + stamp + '-' + rand + '.' + ext;
+  }
+
   function buildPayload(){
     const type = qtypeEl.value;
 
@@ -3017,7 +3032,7 @@ var qrcode = function() {
 
     dlPng.onclick = function(){
       const a = document.createElement('a');
-      a.download = 'qrcode.png';
+      a.download = makeFilename('png');
       a.href = canvas.toDataURL('image/png');
       a.click();
     };
@@ -3025,7 +3040,7 @@ var qrcode = function() {
       const blob = new Blob([lastSvgString], {type:'image/svg+xml'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.download = 'qrcode.svg';
+      a.download = makeFilename('svg');
       a.href = url;
       a.click();
       setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
