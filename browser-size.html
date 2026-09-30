@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Big Is My Browser?</title>
+<style>
+  :root{
+    --ink:#1b1f23;
+    --paper:#faf8f5;
+    --line:#e2ddd4;
+    --tick:#b9b2a5;
+    --accent:#3a6b5f;
+    --muted:#767268;
+    --ruler:24px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    overflow:hidden;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  }
+
+  /* Rulers: minor tick every 10px, mid tick every 50px, major tick every 100px */
+  .ruler{
+    position:fixed;
+    background-color:#fff;
+    z-index:2;
+  }
+  .ruler.top{
+    top:0; left:var(--ruler); right:0;
+    height:var(--ruler);
+    border-bottom:1px solid var(--line);
+    background-image:
+      repeating-linear-gradient(to right, var(--tick) 0 1px, transparent 1px 100px),
+      repeating-linear-gradient(to right, var(--tick) 0 1px, transparent 1px 50px),
+      repeating-linear-gradient(to right, var(--tick) 0 1px, transparent 1px 10px);
+    background-size:calc(100% + var(--ruler)) 100%, calc(100% + var(--ruler)) 10px, calc(100% + var(--ruler)) 5px;
+    background-position:calc(-1 * var(--ruler)) 0, calc(-1 * var(--ruler)) bottom, calc(-1 * var(--ruler)) bottom;
+    background-repeat:no-repeat;
+  }
+  .ruler.left{
+    top:var(--ruler); left:0; bottom:0;
+    width:var(--ruler);
+    border-right:1px solid var(--line);
+    background-image:
+      repeating-linear-gradient(to bottom, var(--tick) 0 1px, transparent 1px 100px),
+      repeating-linear-gradient(to bottom, var(--tick) 0 1px, transparent 1px 50px),
+      repeating-linear-gradient(to bottom, var(--tick) 0 1px, transparent 1px 10px);
+    background-size:100% calc(100% + var(--ruler)), 10px calc(100% + var(--ruler)), 5px calc(100% + var(--ruler));
+    background-position:0 calc(-1 * var(--ruler)), right calc(-1 * var(--ruler)), right calc(-1 * var(--ruler));
+    background-repeat:no-repeat;
+  }
+  .corner{
+    position:fixed;
+    top:0; left:0;
+    width:var(--ruler); height:var(--ruler);
+    background:#fff;
+    border-right:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    z-index:3;
+  }
+  .ruler span{
+    position:absolute;
+    font-size:9px;
+    color:var(--muted);
+    font-variant-numeric:tabular-nums;
+    line-height:1;
+  }
+  .ruler.top span{ top:3px; margin-left:3px; }
+  .ruler.left span{
+    left:3px;
+    margin-top:3px;
+    writing-mode:vertical-rl;
+    transform:rotate(180deg);
+  }
+
+  /* Grid lines every 100px across the page, aligned with the rulers */
+  .grid{
+    position:fixed;
+    inset:0;
+    background-image:
+      repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 100px),
+      repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 100px);
+  }
+
+  main{
+    position:fixed;
+    inset:var(--ruler) 0 0 var(--ruler);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:20px;
+    z-index:1;
+  }
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:28px 36px 24px;
+    max-width:100%;
+  }
+  h1{
+    font-size:12px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+    margin:0 0 14px;
+  }
+  .size{
+    font-size:clamp(34px, 9vw, 72px);
+    font-weight:700;
+    letter-spacing:-0.02em;
+    font-variant-numeric:tabular-nums;
+    line-height:1;
+    white-space:nowrap;
+  }
+  .size .x{
+    color:var(--muted);
+    font-weight:400;
+    margin:0 .15em;
+  }
+  .labels{
+    display:flex;
+    justify-content:space-around;
+    margin-top:10px;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+  }
+  .note{
+    margin:18px 0 0;
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.5;
+    max-width:420px;
+  }
+  .too-small{
+    display:none;
+    font-size:15px;
+    font-weight:600;
+    color:var(--accent);
+  }
+  body.tiny .card{ display:none; }
+  body.tiny .too-small{ display:block; }
+</style>
+</head>
+<body>
+<div class="grid"></div>
+<div class="corner"></div>
+<div class="ruler top" id="rulerTop"></div>
+<div class="ruler left" id="rulerLeft"></div>
+
+<main>
+  <div class="card">
+    <h1>Your browser window is</h1>
+    <div class="size"><span id="w">0</span><span class="x">&times;</span><span id="h">0</span></div>
+    <div class="labels"><span>Width</span><span>Height</span></div>
+    <p class="note">Measured in pixels. Resize the window and the numbers update. Your browser zoom must be at 100% for the numbers to be right.</p>
+  </div>
+  <div class="too-small">Please enlarge your browser window to continue.</div>
+</main>
+
+<script>
+  const wEl = document.getElementById('w');
+  const hEl = document.getElementById('h');
+  const rulerTop = document.getElementById('rulerTop');
+  const rulerLeft = document.getElementById('rulerLeft');
+
+  // Offsets are relative to the ruler strip, which starts at the ruler thickness.
+  const RULER = 24;
+
+  function drawLabels(ruler, length, prop){
+    ruler.textContent = '';
+    for (let px = 100; px < length; px += 100){
+      const label = document.createElement('span');
+      label.textContent = px;
+      label.style[prop] = (px - RULER) + 'px';
+      ruler.appendChild(label);
+    }
+  }
+
+  function update(){
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    wEl.textContent = w;
+    hEl.textContent = h;
+    document.title = w + ' × ' + h + ' · How Big Is My Browser?';
+    document.body.classList.toggle('tiny', w < 200 || h < 150);
+    drawLabels(rulerTop, w, 'left');
+    drawLabels(rulerLeft, h, 'top');
+  }
+
+  window.addEventListener('resize', update);
+  update();
+</script>
+</body>
+</html>
